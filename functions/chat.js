@@ -1,7 +1,7 @@
-// AI chatbot backend for the CONTACT page.
+// AI chatbot backend for the CONTACT page (Cloudflare Pages Function).
 // Keeps the Anthropic API key server-side; the browser only ever talks to this function.
-// Setup: in the Netlify dashboard (or `netlify env:set ANTHROPIC_API_KEY sk-ant-...`),
-// add an environment variable named ANTHROPIC_API_KEY with your Claude API key.
+// Setup: in the Cloudflare Pages dashboard (Settings > Environment variables), or via
+// `wrangler pages secret put ANTHROPIC_API_KEY`, add ANTHROPIC_API_KEY with your Claude API key.
 
 const SYSTEM_PROMPT = `あなたはINFIELD（スポーツチーム向けブランディング会社）のオーダーユニフォーム専用チャットボットです。
 サイト訪問者からの「オーダーユニフォーム（INBLAZE UNIFORM／team-solutionsのオーダーユニフォーム）」に関する質問にのみ、下記の情報をもとに日本語で簡潔・親切に回答してください。
@@ -61,24 +61,24 @@ const MODEL = 'claude-haiku-4-5';
 const MAX_HISTORY = 12;
 const MAX_MESSAGE_CHARS = 1500;
 
-exports.handler = async function (event) {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
-  }
+function json(status, body) {
+  return new Response(JSON.stringify(body), {
+    status: status,
+    headers: { 'content-type': 'application/json' }
+  });
+}
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+export async function onRequestPost(context) {
+  const apiKey = context.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'サーバー側でAPIキーが未設定です。管理者にお問い合わせください。' })
-    };
+    return json(500, { error: 'サーバー側でAPIキーが未設定です。管理者にお問い合わせください。' });
   }
 
   let payload;
   try {
-    payload = JSON.parse(event.body || '{}');
+    payload = await context.request.json();
   } catch (err) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'リクエストの形式が不正です。' }) };
+    return json(400, { error: 'リクエストの形式が不正です。' });
   }
 
   const incoming = Array.isArray(payload.messages) ? payload.messages : [];
@@ -93,7 +93,7 @@ exports.handler = async function (event) {
     });
 
   if (messages.length === 0) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'メッセージが空です。' }) };
+    return json(400, { error: 'メッセージが空です。' });
   }
 
   try {
@@ -115,10 +115,7 @@ exports.handler = async function (event) {
     if (!response.ok) {
       const detail = await response.text();
       console.error('Anthropic API error:', response.status, detail);
-      return {
-        statusCode: 502,
-        body: JSON.stringify({ error: 'ただいま応答できません。しばらくしてから再度お試しください。' })
-      };
+      return json(502, { error: 'ただいま応答できません。しばらくしてから再度お試しください。' });
     }
 
     const data = await response.json();
@@ -127,16 +124,13 @@ exports.handler = async function (event) {
       .join('')
       .trim();
 
-    return {
-      statusCode: 200,
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ reply: reply || 'すみません、うまく回答できませんでした。お問い合わせフォームからご連絡ください。' })
-    };
+    return json(200, { reply: reply || 'すみません、うまく回答できませんでした。お問い合わせフォームからご連絡ください。' });
   } catch (err) {
     console.error('chat function error:', err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'サーバーエラーが発生しました。' })
-    };
+    return json(500, { error: 'サーバーエラーが発生しました。' });
   }
-};
+}
+
+export async function onRequestGet() {
+  return json(405, { error: 'Method Not Allowed' });
+}

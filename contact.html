@@ -231,7 +231,7 @@
         var typingEl = appendMessage('入力中...', 'bot');
         typingEl.classList.add('is-typing');
 
-        fetch('/.netlify/functions/chat', {
+        fetch('/chat', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ messages: history })

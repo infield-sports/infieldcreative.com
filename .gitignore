@@ -1,4 +1,5 @@
 .DS_Store
 .netlify/
+.wrangler/
 .claude/
 node_modules/
