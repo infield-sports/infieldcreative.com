@@ -260,6 +260,9 @@
   <script src="js/main.js?v=3"></script>
   <script>
 const LINE_ID = "@488wpewn";
+const LINE_ADD_URL = "https://line.me/R/ti/p/%40488wpewn";
+// LINEの文面入力URL(oaMessage)はスマホ版LINEのみ対応。PCではLINEのトップページに飛ぶため、友だち追加ページを開く
+const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const PRICES = {set:8800, top:6600, pants:5500};
 const CONSULT_OVER = 30;
 const NAMES = {set:"上下セット", top:"シャツ(上)のみ", pants:"パンツのみ"};
@@ -338,11 +341,21 @@ function render(){
     ...($("memo").value.trim() ? ["", "■ その他", $("memo").value.trim()] : [])
   ].join("\n");
   $("preview").textContent = msg;
-  $("send").href = `https://line.me/R/oaMessage/${encodeURIComponent(LINE_ID)}/?${encodeURIComponent(msg)}`;
+  $("send").href = IS_MOBILE
+    ? `https://line.me/R/oaMessage/${encodeURIComponent(LINE_ID)}/?${encodeURIComponent(msg)}`
+    : LINE_ADD_URL;
+  $("send").textContent = IS_MOBILE ? "LINEで見積もりを送る" : "文面をコピーしてLINEを開く";
 
   const needData = design === "あり" || logo === "あり";
   $("datanote").textContent = (needData ? "送信後、同じトーク画面でデザイン・ロゴのデータ(画像やPDF)を送ってください。" : "")
-    + "ボタンで開かない場合は、文面をコピーしてINBLAZEのLINE(ID: @488wpewn)に貼り付けてください。";
+    + (IS_MOBILE
+      ? "ボタンを押すと文面もコピーされます。LINEに文面が入っていない場合や友だち追加の画面が開いた場合は、追加後のトーク画面に貼り付けてください。"
+      : "パソコンではLINEに文面を自動で入力できません。ボタンで文面をコピーし、PC版LINEのトーク画面に貼り付けてください。スマホのLINEから送る場合は、このページをスマホで開いてください。");
+}
+
+function copyMessage(){
+  const text = $("preview").textContent;
+  try { return navigator.clipboard.writeText(text); } catch(_) { return Promise.reject(); }
 }
 
 document.querySelectorAll(".stepper button").forEach(b => b.addEventListener("click", () => {
@@ -360,7 +373,7 @@ $("send").addEventListener("click", e => {
   if(c.total === 0) problems.push("枚数を1枚以上入れてください。");
   if(!$("team").value.trim()) problems.push("チーム名を入れてください。");
   if(problems.length){ e.preventDefault(); err.textContent = problems.join(" "); err.hidden = false; }
-  else err.hidden = true;
+  else { err.hidden = true; copyMessage().catch(() => {}); }
 });
 
 $("copy").addEventListener("click", () => {
