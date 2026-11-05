@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y2J12Z0KMR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-Y2J12Z0KMR');
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ユニフォーム見積もり | INBLAZE UNIFORM | INFIELD</title>
+  <meta name="description" content="INBLAZEのオリジナルユニフォーム見積もり。バスケ・3x3・サッカー・フットサル対応。枚数を入れるとその場で金額と入金期限の目安がわかり、そのままLINEで相談できます。">
+  <link rel="canonical" href="https://infieldcreative.com/inblaze-estimate.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,700;0,800;1,700;1,800&family=Caveat:wght@600&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=16">
+  <link rel="icon" type="image/png" sizes="32x32" href="images/LOGO/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="images/LOGO/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="images/LOGO/apple-touch-icon.png">
+<style>
+/* 見積もりフォーム(このページ専用) */
+.est-intro{padding-bottom:40px}
+.est-intro .lp-headline{margin-bottom:20px}
+.est-intro .lp-lines{font-size:15px;line-height:1.9}
+.est{max-width:600px;margin:0 auto;padding:0 20px 140px;text-align:left;font-size:15px;line-height:1.7}
+.est form{display:flex;flex-direction:column}
+.est section{padding:28px 0;border-top:1px solid #2a2a2a;display:flex;flex-direction:column;gap:14px}
+.est h2{font-size:16px;font-weight:700;margin:0}
+.est label,.est .lbl{font-size:13px;color:var(--color-gray-dark);display:block}
+.est .field{display:flex;flex-direction:column;gap:6px}
+.est input[type=text],.est input[type=date],.est textarea{width:100%;font:inherit;color:var(--color-white);background:#111;border:1px solid #444;border-radius:0;padding:11px 12px;color-scheme:dark}
+.est textarea{min-height:80px;resize:vertical}
+.est input:focus-visible,.est textarea:focus-visible,.est button:focus-visible,.est a:focus-visible,.est .chip input:focus-visible+span{outline:2px solid var(--color-orange);outline-offset:1px}
+.est .chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));border-top:1px solid #444;border-left:1px solid #444}
+.est .chips.sport{grid-template-columns:repeat(5,1fr)}
+.est .chip{position:relative;display:block;color:inherit;font-size:inherit}
+.est .chip input{position:absolute;opacity:0;pointer-events:none}
+.est .chip span{display:block;text-align:center;padding:11px 4px;border-right:1px solid #444;border-bottom:1px solid #444;font-size:14px;color:var(--color-white);cursor:pointer;background:#111}
+.est .chips.sport .chip span{font-size:12px;padding-inline:0;white-space:nowrap;letter-spacing:-.02em}
+.est .chip input:checked+span{background:var(--color-orange);color:#fff;font-weight:700}
+.est .qty{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #2a2a2a}
+.est .qty .name{font-weight:700}
+.est .qty .unit{font-size:12px;color:var(--color-gray-dark)}
+.est .stepper{display:flex;align-items:center;border:1px solid #444}
+.est .stepper button{width:42px;height:42px;border:0;background:#111;color:#fff;font-size:18px;cursor:pointer}
+.est .stepper input{width:54px;height:42px;border:0;border-inline:1px solid #444;text-align:center;font:inherit;font-size:17px;font-weight:700;background:#050505;color:#fff;-moz-appearance:textfield}
+.est .stepper input::-webkit-outer-spin-button,.est .stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.est .tiers{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.est .tiers th{font-weight:400;color:var(--color-gray-dark)}
+.est .tiers th,.est .tiers td{padding:7px 6px;text-align:right;border-bottom:1px solid #2a2a2a}
+.est .tiers th:first-child,.est .tiers td:first-child{text-align:left}
+.est .tiers td.on{color:var(--color-orange);font-weight:700}
+.est .hint{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--color-orange)}
+.est .note{font-size:12px;color:var(--color-gray-dark);margin:0}
+.est .deadline{font-size:14px;margin:0}
+.est .deadline b{font-size:17px}
+.est .deadline.late{color:#ff8a6e}
+.est .preview{white-space:pre-wrap;font-family:inherit;font-size:13px;background:#111;border:1px solid #2a2a2a;padding:12px;margin:0;max-height:260px;overflow:auto;color:var(--color-gray)}
+.est .actions{display:flex;flex-wrap:wrap;gap:8px}
+.est .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 18px;border-radius:2px;font:inherit;font-weight:700;cursor:pointer;border:1px solid #555;background:transparent;color:#fff}
+.est .btn.primary{background:#06c755;border-color:#06c755;flex:1 1 220px}
+.est .err{color:#ff8a6e;font-size:13px;margin:0}
+.est-bar{position:fixed;left:0;right:0;bottom:0;z-index:90;background:#050505;border-top:1px solid #444;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px))}
+.est-bar .in{max-width:600px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.est-bar .k{font-size:12px;color:var(--color-gray-dark)}
+.est-bar .total{font-size:26px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.est-bar .meta{text-align:right;font-size:12px;line-height:1.5;color:var(--color-gray-dark)}
+@media (max-width:768px){.est-intro{padding-top:56px}}
+</style>
+</head>
+<body class="lp-body">
+
+  <!-- ============ Header ============ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo" aria-label="INFIELD ホーム">
+        <img src="images/LOGO/INFIELD_logo_font_wht.png" alt="INFIELD SPORTS BUSINESS PARTNER" class="logo-img">
+      </a>
+
+      <!-- SNSリンク: hrefを実際のアカウントURLに変更してください -->
+      <div class="header-sns">
+        <a href="https://x.com/infield1989" class="sns-icon" aria-label="X (Twitter)" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><path d="M18.9 1.2h3.7l-8.1 9.3L24 22.8h-7.5l-5.9-7.7-6.7 7.7H.2l8.7-9.9L0 1.2h7.7l5.3 7 6-7zm-1.3 19.4h2L6.6 3.3H4.4l13.2 17.3z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/infield_creative/" class="sns-icon" aria-label="Instagram" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1 .4 2.2.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .4-2.2.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2M12 0C8.7 0 8.3 0 7 .1 5.8.1 4.9.3 4.1.6c-.8.3-1.5.7-2.2 1.4C1.3 2.6.9 3.3.6 4.1.3 4.9.1 5.8.1 7 0 8.3 0 8.7 0 12s0 3.7.1 5c0 1.2.2 2.1.5 2.9.3.8.7 1.5 1.4 2.1.6.6 1.3 1.1 2.1 1.4.8.3 1.7.5 2.9.5 1.3.1 1.7.1 5 .1s3.7 0 5-.1c1.2 0 2.1-.2 2.9-.5.8-.3 1.5-.7 2.1-1.4.6-.6 1.1-1.3 1.4-2.1.3-.8.5-1.7.5-2.9.1-1.3.1-1.7.1-5s0-3.7-.1-5c0-1.2-.2-2.1-.5-2.9-.3-.8-.7-1.5-1.4-2.1C21.4 1.3 20.7.9 19.9.6c-.8-.3-1.7-.5-2.9-.5C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4A6.2 6.2 0 0 0 12 5.8zm0 10.2a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm7.8-10.4a1.4 1.4 0 1 1-2.9 0 1.4 1.4 0 0 1 2.9 0z"/></svg>
+        </a>
+        <a href="https://note.com/inblaze" class="sns-icon sns-note" aria-label="note" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><path d="M5 2h9.5c1.9 0 3 .4 3.8 1.2.8.8 1.2 1.9 1.2 3.8V22h-4.3V7.6c0-.9-.1-1.2-.3-1.4-.2-.2-.5-.3-1.4-.3H9.3V22H5V2z"/></svg>
+        </a>
+        <a href="https://inblaze.official.ec/" class="sns-icon" aria-label="ECサイト(ショップ)" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L20.88 5H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+        </a>
+      </div>
+
+      <button class="menu-toggle" aria-label="メニューを開く" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="global-nav" id="global-nav">
+        <a href="index.html">HOME</a>
+        <div class="nav-item">
+          <a href="service.html" class="is-active">SERVICE</a>
+          <button type="button" class="nav-dropdown-toggle" aria-expanded="false" aria-label="SERVICEメニューの開閉"></button>
+          <div class="nav-dropdown">
+            <div class="nav-dropdown-row">
+              <a href="team-solutions.html">TEAM SOLUTIONS</a>
+              <a href="inblaze-uniform.html" class="nav-dropdown-sub">オーダーユニフォーム</a>
+            </div>
+            <a href="field-solutions.html">FIELD SOLUTIONS</a>
+            <a href="creative-solutions.html">CREATIVE SOLUTIONS</a>
+            <div class="nav-dropdown-row">
+              <a href="performance-solutions.html">PERFORMANCE SOLUTIONS</a>
+              <a href="inblaze-protein.html" class="nav-dropdown-sub">INBLAZEプロテイン</a>
+            </div>
+          </div>
+        </div>
+        <a href="works.html">WORKS</a>
+        <a href="about.html">ABOUT</a>
+        <a href="contact.html" class="nav-contact">CONTACT</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="lp-section est-intro">
+      <div class="lp-container">
+        <p class="lp-eyebrow">ESTIMATE</p>
+        <h1 class="lp-headline">ユニフォーム見積もり</h1>
+        <p class="lp-lines">枚数を入れるとその場で金額が出ます。<br>最後のボタンで、入力内容をINBLAZEのLINEに送れます。</p>
+      </div>
+    </section>
+
+    <div class="est">
+<form id="f" novalidate>
+    <section>
+      <h2>競技</h2>
+      <div class="chips sport" role="radiogroup" aria-label="競技">
+        <label class="chip"><input type="radio" name="sport" id="sp-bb" value="バスケットボール" checked><span>バスケ</span></label>
+        <label class="chip"><input type="radio" name="sport" id="sp-3x3" value="3x3"><span>3x3</span></label>
+        <label class="chip"><input type="radio" name="sport" id="sp-sc" value="サッカー"><span>サッカー</span></label>
+        <label class="chip"><input type="radio" name="sport" id="sp-fs" value="フットサル"><span>フットサル</span></label>
+        <label class="chip"><input type="radio" name="sport" id="sp-ot" value="その他"><span>その他</span></label>
+      </div>
+    </section>
+
+    <section>
+      <h2>アイテムと枚数</h2>
+      <div class="qty"><div><div class="name">上下セット</div><div class="unit" id="u-set"></div></div>
+        <div class="stepper"><button type="button" data-t="set" data-d="-1" aria-label="上下セットを減らす">−</button><input id="q-set" type="number" inputmode="numeric" min="0" value="10" aria-label="上下セットの枚数"><button type="button" data-t="set" data-d="1" aria-label="上下セットを増やす">＋</button></div></div>
+      <div class="qty"><div><div class="name">シャツ(上)のみ</div><div class="unit" id="u-top"></div></div>
+        <div class="stepper"><button type="button" data-t="top" data-d="-1" aria-label="シャツを減らす">−</button><input id="q-top" type="number" inputmode="numeric" min="0" value="0" aria-label="シャツの枚数"><button type="button" data-t="top" data-d="1" aria-label="シャツを増やす">＋</button></div></div>
+      <div class="qty"><div><div class="name">パンツのみ</div><div class="unit" id="u-pants"></div></div>
+        <div class="stepper"><button type="button" data-t="pants" data-d="-1" aria-label="パンツを減らす">−</button><input id="q-pants" type="number" inputmode="numeric" min="0" value="0" aria-label="パンツの枚数"><button type="button" data-t="pants" data-d="1" aria-label="パンツを増やす">＋</button></div></div>
+      <div class="hint" id="hint" hidden></div>
+      <div style="overflow-x:auto">
+        <table class="tiers" aria-label="1枚あたりの価格">
+          <thead><tr><th>枚数</th><th>セット</th><th>シャツ</th><th>パンツ</th></tr></thead>
+          <tbody>
+            <tr><td>1〜30枚</td><td>¥8,800</td><td>¥6,600</td><td>¥5,500</td></tr>
+            <tr><td>31枚〜</td><td colspan="3">価格はご相談ください</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">価格はすべて税込・1枚あたりです。小ロットでも同じ価格で、1枚からの追加注文もできます。合計3万円以上で送料無料です。</p>
+    </section>
+
+    <section>
+      <h2>使う日</h2>
+      <div class="field">
+        <label for="event">大会・使用開始日(任意)</label>
+        <input type="date" id="event">
+      </div>
+      <p class="deadline" id="deadline">日付を入れると、間に合わせるための入金期限が出ます。</p>
+      <p class="note">ご入金確認後、約4〜5週間でお届けします。デザインの確定はその前に行います。</p>
+    </section>
+
+    <section>
+      <h2>チームとデザイン</h2>
+      <div class="field"><label for="team">チーム名</label><input type="text" id="team" autocomplete="organization" placeholder="例:鈴鹿ファイターズ"></div>
+      <div class="field"><label for="person">ご担当者名</label><input type="text" id="person" autocomplete="name" placeholder="例:山田 太郎"></div>
+      <div class="field"><label for="color">チームカラー</label><input type="text" id="color" placeholder="例:ネイビー × オレンジ"></div>
+      <div class="field">
+        <span class="lbl" id="l-design">デザインデータ</span>
+        <div class="chips" role="radiogroup" aria-labelledby="l-design">
+          <label class="chip"><input type="radio" name="design" id="dz-y" value="あり"><span>あり</span></label>
+          <label class="chip"><input type="radio" name="design" id="dz-n" value="なし(デザイン相談したい)" checked><span>なし・相談したい</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl" id="l-logo">ロゴデータ</span>
+        <div class="chips" role="radiogroup" aria-labelledby="l-logo">
+          <label class="chip"><input type="radio" name="logo" id="lg-y" value="あり"><span>あり</span></label>
+          <label class="chip"><input type="radio" name="logo" id="lg-n" value="なし" checked><span>なし</span></label>
+        </div>
+      </div>
+      <div class="field"><label for="memo">その他・ご質問(任意)</label><textarea id="memo" placeholder="例:背中に名前を入れたい、昨年のユニフォームと同じデザインで追加したい など"></textarea></div>
+    </section>
+
+    <section>
+      <h2>LINEで送る</h2>
+      <pre class="preview" id="preview" aria-live="polite"></pre>
+      <p class="err" id="err" hidden></p>
+      <div class="actions">
+        <a class="btn primary" id="send" href="#" target="_blank" rel="noopener">LINEで見積もりを送る</a>
+        <button type="button" class="btn" id="copy">文面をコピー</button>
+      </div>
+      <p class="note" id="datanote">ボタンで開かない場合は、文面をコピーしてINBLAZEのLINE(ID: @488wpewn)に貼り付けてください。</p>
+      <p class="note">まだ友だち追加していない方は <a href="https://line.me/R/ti/p/%40488wpewn" target="_blank" rel="noopener" style="color:var(--accent)">こちらから追加</a> してください。</p>
+    </section>
+</form>
+    </div>
+  </main>
+
+  <!-- ============ Footer ============ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-logo">
+          <img src="images/LOGO/INFIELD_logo_square_wht.png" alt="INFIELD" class="footer-logo-mark">
+          <p class="footer-logo-text">INFIELD</p>
+        </div>
+        <nav class="footer-nav">
+          <a href="index.html">HOME</a>
+          <a href="service.html">SERVICE</a>
+          <a href="works.html">WORKS</a>
+          <a href="about.html">ABOUT</a>
+          <a href="contact.html">CONTACT</a>
+        </nav>
+        <div class="footer-sub">
+          <div class="footer-sns">
+            <a href="https://x.com/infield1989" class="sns-icon" aria-label="X (Twitter)" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><path d="M18.9 1.2h3.7l-8.1 9.3L24 22.8h-7.5l-5.9-7.7-6.7 7.7H.2l8.7-9.9L0 1.2h7.7l5.3 7 6-7zm-1.3 19.4h2L6.6 3.3H4.4l13.2 17.3z"/></svg>
+            </a>
+            <a href="https://www.instagram.com/infield_creative/" class="sns-icon" aria-label="Instagram" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1 .4 2.2.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .4-2.2.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.9c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2M12 0C8.7 0 8.3 0 7 .1 5.8.1 4.9.3 4.1.6c-.8.3-1.5.7-2.2 1.4C1.3 2.6.9 3.3.6 4.1.3 4.9.1 5.8.1 7 0 8.3 0 8.7 0 12s0 3.7.1 5c0 1.2.2 2.1.5 2.9.3.8.7 1.5 1.4 2.1.6.6 1.3 1.1 2.1 1.4.8.3 1.7.5 2.9.5 1.3.1 1.7.1 5 .1s3.7 0 5-.1c1.2 0 2.1-.2 2.9-.5.8-.3 1.5-.7 2.1-1.4.6-.6 1.1-1.3 1.4-2.1.3-.8.5-1.7.5-2.9.1-1.3.1-1.7.1-5s0-3.7-.1-5c0-1.2-.2-2.1-.5-2.9-.3-.8-.7-1.5-1.4-2.1C21.4 1.3 20.7.9 19.9.6c-.8-.3-1.7-.5-2.9-.5C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4A6.2 6.2 0 0 0 12 5.8zm0 10.2a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm7.8-10.4a1.4 1.4 0 1 1-2.9 0 1.4 1.4 0 0 1 2.9 0z"/></svg>
+            </a>
+            <a href="https://note.com/inblaze" class="sns-icon sns-note" aria-label="note" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><path d="M5 2h9.5c1.9 0 3 .4 3.8 1.2.8.8 1.2 1.9 1.2 3.8V22h-4.3V7.6c0-.9-.1-1.2-.3-1.4-.2-.2-.5-.3-1.4-.3H9.3V22H5V2z"/></svg>
+            </a>
+          </div>
+          <a href="privacy.html" class="footer-privacy">PRIVACY POLICY</a>
+        </div>
+      </div>
+      <p class="footer-copy">&copy;2024 INFIELD</p>
+    </div>
+  </footer>
+
+  <div class="est-bar" aria-live="polite">
+  <div class="in">
+    <div><div class="k">お見積もり合計(目安)</div><div class="total" id="total">¥0</div></div>
+    <div class="meta" id="meta"></div>
+  </div>
+</div>
+
+  <script src="js/main.js?v=3"></script>
+  <script>
+const LINE_ID = "@488wpewn";
+const PRICES = {set:8800, top:6600, pants:5500};
+const CONSULT_OVER = 30;
+const NAMES = {set:"上下セット", top:"シャツ(上)のみ", pants:"パンツのみ"};
+const PAYMENT_DAYS = 35;
+const FREE_SHIP = 30000;
+const $ = id => document.getElementById(id);
+const yen = n => "¥" + n.toLocaleString("ja-JP");
+const WD = ["日","月","火","水","木","金","土"];
+const fmtDate = d => `${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})`;
+
+function qty(k){ const v = parseInt($("q-"+k).value,10); return isNaN(v)||v<0 ? 0 : v; }
+
+function calc(){
+  const q = {set:qty("set"), top:qty("top"), pants:qty("pants")};
+  const total = q.set + q.top + q.pants;
+  const lines = Object.keys(q).filter(k => q[k] > 0).map(k => { const unit = PRICES[k]; return {k, n:q[k], unit, sum:q[k]*unit}; });
+  const amount = lines.reduce((a,l) => a + l.sum, 0);
+  return {q, total, lines, amount, consult: total > CONSULT_OVER};
+}
+
+function deadlineInfo(){
+  const v = $("event").value;
+  if(!v) return null;
+  const ev = new Date(v + "T00:00:00");
+  const dl = new Date(ev); dl.setDate(dl.getDate() - PAYMENT_DAYS);
+  const today = new Date(); today.setHours(0,0,0,0);
+  return {ev, dl, late: dl < today};
+}
+
+function radio(name){ const el = document.querySelector(`input[name=${name}]:checked`); return el ? el.value : ""; }
+
+function render(){
+  const c = calc();
+  const hints = [];
+  ["set","top","pants"].forEach(k => $("u-"+k).textContent = `${yen(PRICES[k])} / 枚(税込)`);
+  if(c.consult) hints.push("31枚以上のご注文は、価格のご相談を承ります");
+  if(c.amount > 0 && c.amount < FREE_SHIP) hints.push(`あと${yen(FREE_SHIP - c.amount)}で送料無料になります`);
+  const hint = $("hint");
+  hint.replaceChildren(...hints.map(t => { const s = document.createElement("span"); s.textContent = t; return s; }));
+  hint.hidden = hints.length === 0;
+
+  $("total").textContent = yen(c.amount);
+  $("meta").innerHTML = c.total > 0 ? `合計 ${c.total}枚・税込<br>${c.consult ? "価格はご相談" : (c.amount >= FREE_SHIP ? "送料無料" : "送料別")}` : "枚数を入れてください";
+
+  const d = deadlineInfo(), dlEl = $("deadline");
+  if(d){
+    dlEl.classList.toggle("late", d.late);
+    dlEl.innerHTML = d.late
+      ? `通常の納期(入金後約4〜5週間)では<b>${fmtDate(d.ev)}</b>に間に合わない可能性があります。お急ぎの場合はLINEでご相談ください。`
+      : `<b>${fmtDate(d.dl)}</b> までのご入金で、${fmtDate(d.ev)} に間に合う目安です。`;
+  } else {
+    dlEl.classList.remove("late");
+    dlEl.textContent = "日付を入れると、間に合わせるための入金期限が出ます。";
+  }
+
+  const design = radio("design"), logo = radio("logo");
+  const msg = [
+    "【見積もり・ご相談】",
+    `競技:${radio("sport")}`,
+    `チーム名:${$("team").value.trim() || "(未入力)"}`,
+    `ご担当者:${$("person").value.trim() || "(未入力)"}`,
+    "",
+    "■ アイテム",
+    ...(c.lines.length ? c.lines.map(l => `${NAMES[l.k]} ${l.n}枚 × ${yen(l.unit)} = ${yen(l.sum)}`) : ["(未入力)"]),
+    `合計 ${c.total}枚 / ${yen(c.amount)}(税込・目安)`,
+    ...(c.consult ? ["※31枚以上のため価格相談希望"] : []),
+    `送料:${c.amount >= FREE_SHIP ? "無料" : "別途"}`,
+    "",
+    "■ 使う日",
+    d ? `${fmtDate(d.ev)}(入金期限の目安:${fmtDate(d.dl)}${d.late ? "・急ぎ" : ""})` : "未定",
+    "",
+    "■ デザイン",
+    `チームカラー:${$("color").value.trim() || "(未入力)"}`,
+    `デザインデータ:${design}`,
+    `ロゴデータ:${logo}`,
+    ...($("memo").value.trim() ? ["", "■ その他", $("memo").value.trim()] : [])
+  ].join("\n");
+  $("preview").textContent = msg;
+  $("send").href = `https://line.me/R/oaMessage/${encodeURIComponent(LINE_ID)}/?${encodeURIComponent(msg)}`;
+
+  const needData = design === "あり" || logo === "あり";
+  $("datanote").textContent = (needData ? "送信後、同じトーク画面でデザイン・ロゴのデータ(画像やPDF)を送ってください。" : "")
+    + "ボタンで開かない場合は、文面をコピーしてINBLAZEのLINE(ID: @488wpewn)に貼り付けてください。";
+}
+
+document.querySelectorAll(".stepper button").forEach(b => b.addEventListener("click", () => {
+  const inp = $("q-"+b.dataset.t);
+  inp.value = Math.max(0, qty(b.dataset.t) + parseInt(b.dataset.d,10));
+  render();
+}));
+$("f").addEventListener("input", render);
+$("f").addEventListener("change", render);
+$("f").addEventListener("submit", e => e.preventDefault());
+
+$("send").addEventListener("click", e => {
+  const err = $("err"), c = calc();
+  const problems = [];
+  if(c.total === 0) problems.push("枚数を1枚以上入れてください。");
+  if(!$("team").value.trim()) problems.push("チーム名を入れてください。");
+  if(problems.length){ e.preventDefault(); err.textContent = problems.join(" "); err.hidden = false; }
+  else err.hidden = true;
+});
+
+$("copy").addEventListener("click", () => {
+  const text = $("preview").textContent, btn = $("copy");
+  const done = () => { btn.textContent = "コピーしました"; setTimeout(() => btn.textContent = "文面をコピー", 2000); };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($("preview")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "選択しました。長押しでコピー"; };
+  try { navigator.clipboard.writeText(text).then(done, fallback); } catch(_) { fallback(); }
+});
+
+render();
+</script>
+</body>
+</html>

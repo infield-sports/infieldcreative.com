@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y2J12Z0KMR"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-Y2J12Z0KMR');
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SERVICE | INFIELD</title>
@@ -8,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,700;0,800;1,700;1,800&family=Caveat:wght@600&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/style.css?v=16">
   <link rel="icon" type="image/png" sizes="32x32" href="images/LOGO/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="images/LOGO/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="images/LOGO/apple-touch-icon.png">
@@ -48,10 +56,16 @@
           <a href="service.html" class="is-active">SERVICE</a>
           <button type="button" class="nav-dropdown-toggle" aria-expanded="false" aria-label="SERVICEメニューの開閉"></button>
           <div class="nav-dropdown">
-            <a href="team-solutions.html">TEAM SOLUTIONS</a>
+            <div class="nav-dropdown-row">
+              <a href="team-solutions.html">TEAM SOLUTIONS</a>
+              <a href="inblaze-uniform.html" class="nav-dropdown-sub">オーダーユニフォーム</a>
+            </div>
             <a href="field-solutions.html">FIELD SOLUTIONS</a>
             <a href="creative-solutions.html">CREATIVE SOLUTIONS</a>
-            <a href="performance-solutions.html">PERFORMANCE SOLUTIONS</a>
+            <div class="nav-dropdown-row">
+              <a href="performance-solutions.html">PERFORMANCE SOLUTIONS</a>
+              <a href="inblaze-protein.html" class="nav-dropdown-sub">INBLAZEプロテイン</a>
+            </div>
           </div>
         </div>
         <a href="works.html">WORKS</a>

@@ -188,7 +188,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 240px;
+  min-width: 300px;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease;
@@ -217,6 +217,27 @@ a {
 .nav-dropdown a:hover {
   background: rgba(255, 255, 255, 0.06);
   color: var(--color-orange);
+}
+
+.nav-dropdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nav-dropdown a.nav-dropdown-sub {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 10px !important;
+  color: var(--color-gray-dark);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.nav-dropdown a.nav-dropdown-sub:hover {
+  border-color: var(--color-orange);
 }
 
 .nav-dropdown-toggle {
@@ -1636,7 +1657,7 @@ main {
   }
 
   .nav-item.is-expanded .nav-dropdown {
-    max-height: 300px;
+    max-height: 360px;
     padding: 10px 0 4px;
   }
 
@@ -1644,6 +1665,21 @@ main {
     font-size: 15px !important;
     color: var(--color-gray) !important;
     padding: 6px 0 !important;
+  }
+
+  .nav-dropdown-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .nav-dropdown a.nav-dropdown-sub {
+    font-size: 12px !important;
+    color: var(--color-gray-dark) !important;
+    padding: 4px 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
   }
 
   .about-grid {
@@ -1979,6 +2015,71 @@ main {
 
 .lp-btn-secondary:hover {
   border-color: var(--color-white);
+}
+
+/* Design detail close-ups (real product photo crops) */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.detail-card {
+  text-align: center;
+}
+
+.detail-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 10px;
+}
+
+.detail-connector {
+  display: block;
+  width: 1px;
+  height: 20px;
+  background: var(--color-orange);
+  margin: 0 auto 10px;
+  position: relative;
+}
+
+.detail-connector::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-orange);
+}
+
+.detail-photo {
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #111;
+}
+
+.detail-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.detail-card:hover .detail-photo img {
+  transform: scale(1.07);
+}
+
+@media (max-width: 640px) {
+  .detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 24px;
+  }
 }
 
 /* Feature pills */
