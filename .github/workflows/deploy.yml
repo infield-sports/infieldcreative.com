@@ -2,7 +2,7 @@ name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: [main]
+    branches: ['**']  # main=本番、それ以外=確認用URL
 
 jobs:
   deploy:
@@ -18,4 +18,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy . --project-name=infield-site --branch=main
+          command: pages deploy . --project-name=infield-site --branch=${{ github.ref_name }}

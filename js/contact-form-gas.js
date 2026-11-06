@@ -59,6 +59,7 @@ function doPost(e) {
     sendNotificationEmail(p);
   } catch (err) {
     // メール送信に失敗してもシートへの記録は成功させる
+    console.error('sendNotificationEmail failed: ' + err);
   }
 
   return ContentService
@@ -75,9 +76,7 @@ function sendNotificationEmail(p) {
     'メールアドレス: ' + (p['email'] || '') + '\n' +
     '電話番号: ' + (p['電話番号'] || '') + '\n' +
     'お問い合わせ種別: ' + (p['お問い合わせ種別'] || '') + '\n' +
-    'お問い合わせ内容:\n' + (p['お問い合わせ内容'] || '') + '\n\n' +
-    '---\n' +
-    'スプレッドシート: ' + SpreadsheetApp.getActiveSpreadsheet().getUrl();
+    'お問い合わせ内容:\n' + (p['お問い合わせ内容'] || '');
 
   var options = {};
   if (p['email']) {
