@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>INFIELD STOCK</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root{
+  color-scheme:light;
+  --ink:#171717;
+  --ink-2:#525252;
+  --ink-3:#737373;
+  --line:#e5e5e5;
+  --line-2:#d4d4d4;
+  --bg:#fafafa;
+  --surface:#ffffff;
+  --hover:#f5f5f5;
+  --radius:4px;
+  --accent:#ED6A1F;
+  --accent-hover:#D95E17;
+  --accent-text:#B54C0A;
+  --on-accent:#171717;
+  --bar:#737373;
+  --bar-muted:#a3a3a3;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Noto Sans JP",Meiryo,sans-serif;
+  font-size:14px;line-height:1.5;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
+}
+button,input,select{font:inherit;color:inherit;}
+button{cursor:pointer;}
+h1,h2,h3,p{margin:0;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.icon{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+.num{font-variant-numeric:tabular-nums;}
+.only-m,.only-mf{display:none !important;}
+
+/* app frame */
+.app{display:grid;grid-template-columns:208px minmax(0,1fr);min-height:100vh;}
+.side{
+  position:sticky;top:0;height:100vh;display:flex;flex-direction:column;
+  background:var(--surface);border-right:1px solid var(--line);padding:24px 16px 16px;
+}
+.brand{font-size:14px;font-weight:700;padding:0 8px;margin-bottom:24px;}
+.nav{display:flex;flex-direction:column;gap:8px;}
+.nav-btn{
+  display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:0 8px;
+  background:none;border:none;border-radius:var(--radius);color:var(--ink-2);text-align:left;
+}
+.nav-btn:hover{background:var(--hover);color:var(--ink);}
+.nav-btn[aria-current="page"]{background:var(--hover);color:var(--ink);font-weight:600;}
+.nav-btn[aria-current="page"] .icon{color:var(--accent);}
+.save-status{margin-top:auto;padding:0 8px;font-size:12px;color:var(--ink-3);}
+.save-status.err{color:var(--accent-text);font-weight:600;}
+.main{min-width:0;padding:32px 40px 48px;}
+.main-inner{max-width:1160px;}
+.view{display:none;}
+.view.active{display:block;}
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;}
+.page-head h1{font-size:20px;font-weight:700;line-height:1.4;}
+
+/* buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;
+  background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);white-space:nowrap;font-weight:500;
+}
+.btn:hover{background:var(--hover);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600;}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover);}
+.btn-sm{min-height:32px;padding:0 8px;font-size:13px;}
+.btn-link{background:none;border:none;padding:0;min-height:0;font-weight:500;text-decoration:underline;text-underline-offset:2px;}
+.btn-link:hover{background:none;color:var(--ink-2);}
+.icon-btn{
+  display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;
+  background:none;border:none;border-radius:var(--radius);color:var(--ink-3);
+}
+.icon-btn:hover{background:var(--line);color:var(--ink);}
+
+/* summary strip */
+.kpis{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:24px;
+}
+.kpi{padding:16px;border:none;border-left:1px solid var(--line);background:none;text-align:left;min-width:0;}
+.kpi:first-child{border-left:none;}
+.kpi-label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2);}
+.kpi-value{display:block;font-size:20px;font-weight:600;line-height:1.4;margin-top:8px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+button.kpi{cursor:pointer;}
+button.kpi:hover{background:var(--hover);}
+button.kpi[aria-pressed="true"]{box-shadow:inset 0 -2px 0 var(--accent);}
+.kpi.is-alert .icon,.kpi.is-alert .kpi-value{color:var(--accent-text);}
+
+/* charts */
+.charts{display:grid;grid-template-columns:minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:24px;}
+.charts:empty{display:none;}
+.charts.cols2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.chart{padding:16px;min-width:0;}
+.charts.cols2 .chart+.chart{border-left:1px solid var(--line);}
+.chart h2{font-size:13px;font-weight:600;line-height:1.5;margin-bottom:8px;}
+.bar-row{
+  display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr) 136px;align-items:center;gap:8px;
+  width:calc(100% + 16px);min-height:32px;margin:0 -8px;padding:4px 8px;
+  background:none;border:none;border-radius:var(--radius);text-align:left;font-size:13px;
+}
+button.bar-row:hover{background:var(--hover);}
+.bar-label{min-width:0;overflow-wrap:anywhere;line-height:1.35;}
+.bar-area{display:block;border-left:1px solid var(--line-2);min-width:0;}
+.bar{display:block;height:16px;min-width:2px;background:var(--bar);border-radius:0 4px 4px 0;}
+.bar-row.is-other .bar{background:var(--bar-muted);}
+.bar-row.is-other .bar-label{color:var(--ink-2);}
+.bar-row[aria-pressed="true"] .bar{background:var(--accent);}
+.bar-row[aria-pressed="true"] .bar-label{font-weight:600;}
+.bar-val{white-space:nowrap;text-align:right;font-weight:500;font-variant-numeric:tabular-nums;}
+.bar-val small{display:inline-block;min-width:40px;font-size:12px;font-weight:400;color:var(--ink-3);}
+.meter{display:block;position:relative;width:80px;height:8px;margin:8px 0 4px auto;background:var(--line);border-radius:0 4px 4px 0;}
+.meter-fill{position:absolute;left:0;top:0;bottom:0;background:var(--bar);border-radius:0 4px 4px 0;}
+.meter-fill.is-low{background:var(--accent);}
+.meter-tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);box-shadow:0 0 0 1px var(--surface);}
+.neg{color:var(--accent-text);font-weight:600;}
+.chart-note{font-size:12px;color:var(--ink-3);margin-top:8px;}
+
+/* location tabs */
+.loc-tabs{display:flex;gap:24px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:16px;scrollbar-width:none;}
+.loc-tabs::-webkit-scrollbar{display:none;}
+.loc-tab{
+  flex:none;display:flex;align-items:baseline;gap:8px;min-height:40px;padding:8px 0;
+  background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--ink-2);
+}
+.loc-tab:hover{color:var(--ink);}
+.loc-tab[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent);}
+.loc-tab .num{font-size:13px;color:var(--ink-3);font-weight:400;}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.search{position:relative;flex:1 1 240px;min-width:0;max-width:400px;}
+.search .icon{position:absolute;left:8px;top:12px;color:var(--ink-3);pointer-events:none;}
+.search input{padding-left:32px;}
+.input,.toolbar select{
+  width:100%;min-height:40px;padding:0 8px;background:var(--surface);
+  border:1px solid var(--line-2);border-radius:var(--radius);
+}
+.toolbar select{width:auto;flex:0 1 200px;min-width:0;}
+.input:focus,.toolbar select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent);}
+.input::placeholder{color:var(--ink-3);}
+.input:disabled{background:var(--hover);color:var(--ink-2);}
+.input[aria-invalid="true"]{border-color:var(--accent);border-width:2px;}
+.result-count{align-self:center;margin-left:auto;font-size:12px;color:var(--ink-3);white-space:nowrap;}
+
+/* tables */
+.tbl-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{
+  padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--line);
+  font-size:12px;font-weight:500;color:var(--ink-2);text-align:left;white-space:nowrap;
+}
+.tbl td{padding:8px 16px;border-bottom:1px solid var(--line);vertical-align:middle;height:56px;}
+.tbl tbody tr:last-child>td{border-bottom:none;}
+.tbl .r{text-align:right;}
+.tbl tr.row-click{cursor:pointer;}
+.tbl tr.row-click:hover>td{background:var(--hover);}
+.c-toggle{width:40px;padding-right:0 !important;}
+.c-actions{width:88px;white-space:nowrap;text-align:right;padding-left:0 !important;}
+.sort-btn{display:inline-flex;align-items:center;gap:8px;padding:0;background:none;border:none;color:inherit;font-weight:inherit;}
+.sort-btn:hover{color:var(--ink);}
+.sort-btn .icon{width:12px;height:12px;}
+.sort-btn[data-active="false"] .icon{opacity:.35;}
+.sort-btn[data-active="true"] .icon{color:var(--accent-text);}
+.name{font-weight:600;overflow-wrap:anywhere;}
+.sub{font-size:12px;color:var(--ink-3);overflow-wrap:anywhere;}
+.dim{color:var(--ink-2);}
+.none{color:var(--ink-3);}
+.qty{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.qty small{font-size:12px;font-weight:400;color:var(--ink-3);margin-left:4px;}
+.chev{transition:transform .12s;}
+.chev.open{transform:rotate(90deg);}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;padding:0 8px;min-height:24px;
+  border:1px solid var(--accent);border-radius:var(--radius);color:var(--accent-text);font-size:12px;font-weight:500;white-space:nowrap;
+}
+.badge .icon{width:12px;height:12px;}
+.badge-solid{background:var(--accent);color:var(--on-accent);font-weight:600;}
+.badge-quiet{border-color:var(--line-2);color:var(--ink-2);font-weight:400;}
+.tags{display:flex;flex-wrap:wrap;gap:8px;}
+.contact-line{display:block;font-size:13px;overflow-wrap:anywhere;}
+.contact-line a{text-underline-offset:2px;}
+
+/* detail row */
+.detail>td{padding:0 !important;height:auto;background:var(--bg);}
+.detail-inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,280px);gap:32px;padding:16px 16px 24px 64px;}
+.detail-title{font-size:12px;font-weight:500;color:var(--ink-2);margin-bottom:8px;}
+.loc-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;border-bottom:1px solid var(--line);}
+.loc-name{display:flex;align-items:center;gap:8px;min-width:0;overflow-wrap:anywhere;}
+.stepper{display:flex;align-items:center;gap:8px;flex:none;}
+.step-btn{
+  display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;
+  background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);
+}
+.step-btn:hover{background:var(--hover);}
+.step-input{
+  width:64px;height:32px;padding:0 8px;text-align:right;background:var(--surface);
+  border:1px solid var(--line-2);border-radius:var(--radius);font-variant-numeric:tabular-nums;font-weight:600;
+}
+.step-input:focus{outline:2px solid var(--accent);outline-offset:-1px;}
+.spacer{display:inline-block;width:32px;height:32px;}
+.add-loc{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px;}
+.add-loc select{flex:1 1 160px;min-width:0;min-height:32px;padding:0 8px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);}
+.add-loc input{width:80px;min-height:32px;padding:0 8px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);}
+.hint{font-size:12px;color:var(--ink-3);margin-top:8px;}
+.meta-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+.meta-row span:first-child{color:var(--ink-2);flex:none;}
+.meta-row span:last-child{text-align:right;overflow-wrap:anywhere;}
+.meta-actions{gap:8px;margin-top:16px;}
+
+/* empty */
+.empty{padding:32px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);}
+.empty-title{font-weight:600;margin-bottom:8px;}
+.empty-text{color:var(--ink-2);margin-bottom:16px;}
+.empty-text:last-child{margin-bottom:0;}
+
+/* drawer */
+dialog{color:var(--ink);padding:0;border:none;}
+dialog::backdrop{background:rgba(23,23,23,.32);}
+.drawer{
+  position:fixed;inset:0 0 0 auto;margin:0;width:min(480px,100vw);height:100dvh;max-width:none;max-height:none;
+  background:var(--surface);border-left:1px solid var(--line);
+}
+.drawer form{display:flex;flex-direction:column;height:100%;}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;border-bottom:1px solid var(--line);}
+.drawer-head h2{font-size:16px;font-weight:700;}
+.drawer-body{flex:1;overflow-y:auto;padding:24px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-content:start;}
+.drawer-foot{display:flex;gap:8px;padding:16px 24px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line);}
+.field{min-width:0;}
+.field.full{grid-column:1 / -1;}
+.field label,.field .label{display:block;font-size:13px;font-weight:500;margin-bottom:8px;}
+.req{font-weight:400;color:var(--ink-3);margin-left:8px;font-size:12px;}
+.field-err{color:var(--accent-text);font-size:12px;font-weight:600;margin-top:8px;}
+.field-err:empty{display:none;}
+.calc{padding:8px 16px;background:var(--bg);border-radius:var(--radius);font-size:13px;display:flex;justify-content:space-between;gap:16px;}
+.checks{display:flex;flex-wrap:wrap;gap:8px;}
+.check{display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:0 8px;border:1px solid var(--line-2);border-radius:var(--radius);cursor:pointer;font-size:13px;}
+.check:has(input:checked){border-color:var(--accent);background:var(--hover);font-weight:500;}
+.check input{margin:0;accent-color:var(--accent);}
+.plain-value{min-height:40px;display:flex;align-items:center;font-weight:600;}
+
+/* confirm */
+.confirm{width:min(440px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;}
+.confirm h2{font-size:16px;font-weight:700;margin-bottom:8px;}
+.confirm p{color:var(--ink-2);margin-bottom:24px;overflow-wrap:anywhere;}
+.confirm-actions{display:flex;justify-content:flex-end;gap:8px;}
+
+/* toast */
+.toast{
+  position:fixed;left:232px;bottom:24px;z-index:50;display:none;align-items:center;gap:16px;
+  max-width:calc(100vw - 48px);padding:8px 16px;min-height:40px;background:var(--ink);color:#fff;border-radius:var(--radius);font-size:13px;
+}
+.toast.show{display:flex;}
+.toast button{padding:0;background:none;border:none;color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;}
+
+@media (max-width:1040px){
+  .main{padding:24px;}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .kpi:nth-child(4){border-left:none;}
+  .kpi:nth-child(n+4){border-top:1px solid var(--line);}
+  .detail-inner{grid-template-columns:minmax(0,1fr);gap:24px;padding-left:16px;}
+  .charts.cols2{grid-template-columns:minmax(0,1fr);}
+  .charts.cols2 .chart+.chart{border-left:none;border-top:1px solid var(--line);}
+}
+@media (max-width:720px){
+  .only-m{display:block !important;}
+  .only-mf{display:flex !important;}
+  .only-d{display:none !important;}
+  .app{display:block;}
+  .side{
+    position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;z-index:20;padding:0 0 env(safe-area-inset-bottom);
+    border-right:none;border-top:1px solid var(--line);
+  }
+  .brand,.side .save-status{display:none;}
+  .nav{flex-direction:row;gap:0;}
+  .nav-btn{flex:1;flex-direction:column;gap:0;justify-content:center;min-height:56px;padding:0 4px;font-size:11px;border-radius:0;text-align:center;}
+  .nav-btn[aria-current="page"]{background:none;}
+  .nav-btn .icon{width:20px;height:20px;margin-bottom:4px;}
+  .main{padding:16px 16px 88px;}
+  .page-head{margin-bottom:16px;}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:16px;}
+  .kpi{padding:8px 16px;border-left:none;border-top:1px solid var(--line);}
+  .kpi:nth-child(n){border-top:1px solid var(--line);}
+  .kpi:nth-child(-n+2){border-top:none;}
+  .kpi:nth-child(even){border-left:1px solid var(--line);}
+  .kpi:last-child{grid-column:1 / -1;border-left:none;}
+  .kpi-value{font-size:16px;margin-top:0;}
+  .charts{margin-bottom:16px;}
+  .bar-row{grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;min-height:40px;}
+  .bar-area{grid-column:1 / -1;grid-row:2;}
+  .bar{height:8px;}
+  .search{flex-basis:100%;max-width:none;}
+  .toolbar select{flex:1 1 auto;}
+  .result-count{display:none;}
+  input,select{font-size:16px !important;}
+
+  .tbl-wrap{overflow:visible;}
+  .tbl,.tbl tbody{display:block;}
+  .tbl thead{display:none;}
+  .tbl tr{display:block;position:relative;}
+  .tbl tbody>tr{border-bottom:1px solid var(--line);}
+  .tbl tbody>tr:last-child{border-bottom:none;}
+  .tbl td{display:block;height:auto;border-bottom:none;padding:0;}
+
+  .tbl-inv tr.row-click{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;padding:8px 16px 8px 8px;min-height:64px;}
+  .tbl-inv .c-toggle{width:auto;}
+  .tbl-inv .c-qty{text-align:right;padding-left:8px;}
+  .tbl-inv tr.row-click.is-open{border-bottom:none;}
+
+  .tbl-master tr{padding:16px;}
+  .tbl-master td{margin-top:8px;}
+  .tbl-master td:first-child{margin-top:0;padding-right:88px;}
+  .tbl-master td[data-label]{display:flex;justify-content:space-between;gap:16px;font-size:13px;text-align:right;}
+  .tbl-master td[data-label]::before{content:attr(data-label);color:var(--ink-2);text-align:left;flex:none;}
+  .tbl-master td[data-label]>*{min-width:0;}
+  .tbl-master .tags{justify-content:flex-end;}
+  .tbl-master .c-actions{position:absolute;top:8px;right:8px;margin:0;width:auto;}
+  .icon-btn,.step-btn{width:40px;height:40px;}
+  .step-input{height:40px;}
+  .spacer{width:40px;height:40px;}
+  .add-loc select,.add-loc input{min-height:40px;}
+  .btn-sm{min-height:40px;padding:0 16px;}
+  .detail-inner{padding:8px 16px 16px;}
+  .drawer{width:100vw;border-left:none;}
+  .drawer-head{padding:8px 8px 8px 16px;}
+  .drawer-body{padding:16px;}
+  .drawer-foot{padding:16px 16px calc(16px + env(safe-area-inset-bottom));}
+  .drawer-foot .btn{flex:1;}
+  .toast{left:16px;right:16px;bottom:72px;max-width:none;justify-content:space-between;}
+}
+
+[hidden]{display:none !important;}
+.login{min-height:100dvh;display:flex;align-items:flex-start;justify-content:center;padding:96px 16px 48px;}
+.login-box{display:grid;gap:16px;width:min(360px,100%);padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);}
+.login-box h1{font-size:16px;font-weight:700;}
+.login-box .field label{display:block;font-size:13px;font-weight:500;margin-bottom:8px;}
+.head-actions{display:flex;align-items:center;gap:8px;}
+.side-foot{margin-top:auto;display:grid;gap:8px;}
+.side-foot .save-status{margin:0;}
+.btn-plain{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 8px;background:none;border:none;border-radius:var(--radius);color:var(--ink-2);text-align:left;}
+.btn-plain:hover{background:var(--hover);color:var(--ink);}
+.op-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.op-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.op-choices .btn{min-height:56px;}
+.detail-gap{margin-top:24px;}
+.sub-inline{margin-left:8px;font-size:12px;color:var(--ink-3);}
+.badge-line:empty{display:none;}
+.badge-line{margin-top:4px;}
+a.btn{color:inherit;text-decoration:none;}
+.drawer-body .plain-value{min-height:0;}
+.chart-note{overflow-wrap:anywhere;}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+  <symbol id="i-in" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+</svg>
+
+<div class="login" id="loginView" hidden>
+  <form class="login-box" id="loginForm" novalidate>
+    <h1>INFIELD STOCK</h1>
+    <div class="field"><label for="loginEmail">メールアドレス</label><input class="input" id="loginEmail" type="email" autocomplete="username" required></div>
+    <div class="field"><label for="loginPass">パスワード</label><input class="input" id="loginPass" type="password" autocomplete="current-password" required></div>
+    <div class="field-err" id="loginErr" role="alert"></div>
+    <button type="button" class="btn btn-primary" id="loginBtn">ログイン</button>
+  </form>
+</div>
+
+<div class="login" id="messageView" hidden>
+  <div class="login-box">
+    <h1 id="messageTitle"></h1>
+    <p class="dim" id="messageText"></p>
+    <button type="button" class="btn" data-act="signOut" id="messageBtn">ログアウト</button>
+  </div>
+</div>
+
+<div class="app" id="appView" hidden>
+  <aside class="side">
+    <div class="brand">INFIELD STOCK</div>
+    <nav class="nav" aria-label="メインメニュー">
+      <button class="nav-btn" data-act="nav" data-section="inventory"><svg class="icon"><use href="#i-package"/></svg>在庫</button>
+      <button class="nav-btn" data-act="nav" data-section="history"><svg class="icon"><use href="#i-history"/></svg>履歴</button>
+      <button class="nav-btn" data-act="nav" data-section="products"><svg class="icon"><use href="#i-tag"/></svg>商品</button>
+      <button class="nav-btn" data-act="nav" data-section="suppliers"><svg class="icon"><use href="#i-truck"/></svg>仕入れ先</button>
+      <button class="nav-btn" data-act="nav" data-section="partners"><svg class="icon"><use href="#i-store"/></svg>委託先</button>
+    </nav>
+    <div class="side-foot only-d">
+      <div class="save-status" id="meName"></div>
+      <button type="button" class="btn-plain" data-act="signOut"><svg class="icon"><use href="#i-logout"/></svg>ログアウト</button>
+    </div>
+  </aside>
+
+  <main class="main"><div class="main-inner">
+    <section class="view" id="view-inventory">
+      <div class="page-head">
+        <h1>在庫</h1>
+        <div class="head-actions">
+          <button type="button" class="icon-btn only-m" data-act="signOut" aria-label="ログアウト"><svg class="icon"><use href="#i-logout"/></svg></button>
+          <button class="btn btn-primary" data-act="opNew" data-write><svg class="icon"><use href="#i-plus"/></svg>入出庫を登録</button>
+        </div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="charts" id="charts"></div>
+      <div class="loc-tabs" id="locTabs" role="tablist" aria-label="保管場所"></div>
+      <div class="toolbar">
+        <div class="search"><svg class="icon"><use href="#i-search"/></svg><input class="input" id="searchBox" type="search" placeholder="商品名・コード・仕入れ先で検索" aria-label="在庫を検索"></div>
+        <select id="catSelect" aria-label="サービス"></select>
+        <span class="result-count" id="invCount"></span>
+      </div>
+      <div id="listSlot"></div>
+    </section>
+
+    <section class="view" id="view-history">
+      <div class="page-head"><h1>入出庫の履歴</h1></div>
+      <div class="toolbar">
+        <div class="search"><svg class="icon"><use href="#i-search"/></svg><input class="input" id="historySearch" type="search" placeholder="商品名・メモ・担当者で検索" aria-label="履歴を検索"></div>
+        <select id="historyType" aria-label="種類"></select>
+        <span class="result-count" id="historyCount"></span>
+      </div>
+      <div id="historySlot"></div>
+    </section>
+
+    <section class="view" id="view-products">
+      <div class="page-head">
+        <h1>商品</h1>
+        <a class="btn" id="sheetLink" target="_blank" rel="noopener">商品マスタを開く</a>
+      </div>
+      <div class="toolbar">
+        <div class="search"><svg class="icon"><use href="#i-search"/></svg><input class="input" id="productSearch" type="search" placeholder="商品名・コード・仕入れ先で検索" aria-label="商品を検索"></div>
+        <select id="productCat" aria-label="サービス"></select>
+        <span class="result-count" id="productCount"></span>
+      </div>
+      <div id="productListSlot"></div>
+      <p class="chart-note">商品名・原価・価格は商品マスタが正です。この画面で変更できるのは僅少ラインだけです。粗利率は税抜価格と原価から計算しています。</p>
+    </section>
+
+    <section class="view" id="view-suppliers">
+      <div class="page-head">
+        <h1>仕入れ先</h1>
+        <button class="btn btn-primary" data-act="addSupplier" data-write><svg class="icon"><use href="#i-plus"/></svg>仕入れ先を追加</button>
+      </div>
+      <div class="toolbar">
+        <div class="search"><svg class="icon"><use href="#i-search"/></svg><input class="input" id="supplierSearch" type="search" placeholder="会社名で検索" aria-label="仕入れ先を検索"></div>
+        <span class="result-count" id="supplierCount"></span>
+      </div>
+      <div id="supplierListSlot"></div>
+    </section>
+
+    <section class="view" id="view-partners">
+      <div class="page-head">
+        <h1>販売委託先</h1>
+        <button class="btn btn-primary" data-act="addPartner" data-write><svg class="icon"><use href="#i-plus"/></svg>委託先を追加</button>
+      </div>
+      <div class="toolbar">
+        <div class="search"><svg class="icon"><use href="#i-search"/></svg><input class="input" id="partnerSearch" type="search" placeholder="店舗名で検索" aria-label="委託先を検索"></div>
+        <span class="result-count" id="partnerCount"></span>
+      </div>
+      <div id="partnerListSlot"></div>
+    </section>
+  </div></main>
+</div>
+
+<dialog class="drawer" id="drawer" aria-labelledby="drawerTitle">
+  <form id="drawerForm" novalidate>
+    <div class="drawer-head">
+      <h2 id="drawerTitle"></h2>
+      <button type="button" class="icon-btn" data-act="closeDrawer" aria-label="閉じる"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <div class="drawer-foot">
+      <button type="button" class="btn btn-primary" id="drawerSubmit">保存</button>
+      <button type="button" class="btn" data-act="closeDrawer">キャンセル</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="confirm" id="confirmDlg" aria-labelledby="confirmTitle">
+  <h2 id="confirmTitle"></h2>
+  <p id="confirmText"></p>
+  <div class="confirm-actions">
+    <button type="button" class="btn" id="confirmNo">キャンセル</button>
+    <button type="button" class="btn btn-primary" id="confirmYes"></button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
+<script>
+/* ---------- settings: the publishable key is safe in a page; access is enforced by login + RLS ---------- */
+const SB_URL = 'https://hcfhhhnobkldcyshcbjz.supabase.co';
+const SB_KEY = 'sb_publishable_jyqw1zcJvKPviMrfkgUOYw_0Rim11--';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1ale9IWYppq0toXB0aMrdJbXua7wGwwqeon6hlHk_lsE/edit';
+/* products.tax_rate arrives with CORE stage 2; until then these are the reduced-rate items */
+const FOOD_CODES = ['PS-001','PS-002','OW-001','OW-002'];
+const SECTIONS = ['inventory','history','products','suppliers','partners'];
+const TYPE_LABEL = { INBOUND:'入庫', OUTBOUND:'出庫', TRANSFER_IN:'移管(入)', TRANSFER_OUT:'移管(出)', ADJUSTMENT:'調整' };
+const REASONS = ['棚卸差異','破損・紛失','入力訂正','その他'];
+
+const el = id => document.getElementById(id);
+let sb = null;
+let me = null;
+const db = { products:[], inventories:[], warehouses:[], suppliers:[], productSuppliers:[], businesses:[], customers:[], txns:[] };
+let section = 'inventory';
+const invState = { cat:'全て', search:'', loc:'all', low:false, sort:null, dir:1 };
+const productState = { cat:'全て', search:'', sort:null, dir:-1 };
+const supplierState = { search:'' };
+const partnerState = { search:'' };
+const historyState = { search:'', type:'全て' };
+const expandedIds = new Set();
+
+/* ---------- helpers ---------- */
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtYen(n){ return '¥' + Math.round(Number(n)||0).toLocaleString('ja-JP'); }
+function fmtNum(n){ return (Number(n)||0).toLocaleString('ja-JP'); }
+function icon(name){ return `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`; }
+function includes(hay, term){ return !term || String(hay||'').toLowerCase().includes(term.toLowerCase()); }
+function byText(a,b){ return String(a||'').localeCompare(String(b||''),'ja'); }
+function today(){
+  const d = new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  return d.toISOString().slice(0,10);
+}
+function canWrite(){ return !!me && (me.role==='owner' || me.role==='staff'); }
+function errText(e){
+  const m = (e && e.message) || '';
+  if(/row-level security|permission denied|権限/.test(m)) return 'この操作を行う権限がありません。';
+  if(/Failed to fetch|NetworkError|Load failed/.test(m)){
+    return window.top!==window.self
+      ? '通信できませんでした。プレビュー画面では接続できない場合があります。ファイルをダウンロードして、ブラウザで開いてください。'
+      : '通信できませんでした。電波の状態を確認して、もう一度お試しください。';
+  }
+  return m || '処理できませんでした。もう一度お試しください。';
+}
+
+/* ---------- toast / confirm / drawer ---------- */
+let toastTimer = null;
+function showToast(msg){
+  const t = el('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+function confirmDialog(title, text, yesLabel){
+  return new Promise(resolve=>{
+    const d = el('confirmDlg');
+    el('confirmTitle').textContent = title;
+    el('confirmText').textContent = text;
+    el('confirmYes').textContent = yesLabel;
+    let answer = false;
+    el('confirmYes').onclick = ()=>{ answer = true; d.close(); };
+    el('confirmNo').onclick = ()=> d.close();
+    d.addEventListener('close', ()=>resolve(answer), {once:true});
+    d.showModal();
+    el('confirmNo').focus();
+  });
+}
+let drawerSubmit = null, drawerBusy = false;
+function openDrawer(title, body, onSubmit, submitLabel){
+  el('drawerTitle').textContent = title;
+  el('drawerBody').innerHTML = body;
+  el('drawerSubmit').textContent = submitLabel || '保存';
+  el('drawerSubmit').hidden = false;
+  drawerSubmit = onSubmit;
+  const d = el('drawer');
+  if(!d.open) d.showModal();
+  el('drawerBody').scrollTop = 0;
+  const first = el('drawerBody').querySelector('input:not([disabled]),select:not([disabled])');
+  if(first) first.focus();
+}
+function closeDrawer(){ if(el('drawer').open) el('drawer').close(); }
+function setFieldError(name, msg){
+  const input = el('drawerBody').querySelector(`[name="${name}"]`);
+  const err = el('drawerBody').querySelector(`[data-err="${name}"]`);
+  if(err) err.textContent = msg;
+  if(input){ input.setAttribute('aria-invalid','true'); input.focus(); }
+}
+function setFormError(msg){ const e = el('drawerBody').querySelector('[data-err="_form"]'); if(e) e.textContent = msg; }
+function clearFieldErrors(){
+  el('drawerBody').querySelectorAll('[aria-invalid]').forEach(n=>n.removeAttribute('aria-invalid'));
+  el('drawerBody').querySelectorAll('[data-err]').forEach(n=>{ n.textContent=''; });
+}
+function field(o){
+  const id = 'f_'+o.name;
+  const req = o.required ? '<span class="req">必須</span>' : '';
+  const attrs = `id="${id}" name="${o.name}" class="input"`;
+  let control;
+  if(o.options){
+    control = `<select ${attrs}>${o.options.map(x=>`<option value="${esc(x.value)}"${String(x.value)===String(o.value??'')?' selected':''}>${esc(x.label)}</option>`).join('')}</select>`;
+  } else {
+    const numAttrs = o.type==='number' ? ` min="${o.min??0}" inputmode="numeric"` : '';
+    control = `<input ${attrs} type="${o.type||'text'}" value="${esc(o.value??'')}" placeholder="${esc(o.placeholder||'')}"${numAttrs}>`;
+  }
+  return `<div class="field${o.half?'':' full'}"><label for="${id}">${esc(o.label)}${req}</label>${control}${o.after||''}<div class="field-err" data-err="${o.name}"></div></div>`;
+}
+const formErrorSlot = '<div class="field full"><div class="field-err" data-err="_form" role="alert"></div></div>';
+function formValues(){
+  const out = {};
+  for(const [k,v] of new FormData(el('drawerForm')).entries()) out[k] = typeof v==='string' ? v.trim() : v;
+  return out;
+}
+function posInt(v){ const n = Number(v); return v!=='' && Number.isInteger(n) && n>0 ? n : null; }
+function nonNegInt(v){ const n = Number(v); return v!=='' && Number.isInteger(n) && n>=0 ? n : null; }
+
+/* ---------- data ---------- */
+async function fetchAll(table, order){
+  const size = 1000; let start = 0; let rows = [];
+  for(;;){
+    const { data, error } = await sb.from(table).select('*').order(order||'id').range(start, start+size-1);
+    if(error) throw error;
+    rows = rows.concat(data||[]);
+    if(!data || data.length<size) return rows;
+    start += size;
+  }
+}
+async function loadAll(){
+  const [products,inventories,warehouses,suppliers,productSuppliers,businesses,customers,txns] = await Promise.all([
+    fetchAll('products','product_code'), fetchAll('inventories'), fetchAll('warehouses','warehouse_code'),
+    fetchAll('suppliers','supplier_code'), fetchAll('product_suppliers'), fetchAll('businesses','sort'),
+    fetchAll('customers'), fetchAll('inventory_transactions')
+  ]);
+  Object.assign(db,{products,inventories,warehouses,suppliers,productSuppliers,businesses,customers,txns});
+}
+async function refresh(){ await loadAll(); renderAll(); }
+
+function activeProducts(){ return db.products.filter(p=>p.active); }
+function stockMap(pid){ const m = {}; db.inventories.filter(i=>i.product_id===pid).forEach(i=>{ m[i.warehouse_id]=i.quantity; }); return m; }
+function totalQty(pid){ return db.inventories.filter(i=>i.product_id===pid).reduce((s,i)=>s+i.quantity,0); }
+function qtyAt(pid, loc){ if(loc==='all') return totalQty(pid); const r = db.inventories.find(i=>i.product_id===pid && String(i.warehouse_id)===String(loc)); return r?r.quantity:0; }
+function primarySupplier(pid){
+  const link = db.productSuppliers.find(x=>x.product_id===pid && x.is_primary);
+  return link ? db.suppliers.find(s=>s.id===link.supplier_id)||null : null;
+}
+function bizName(code){ const b = db.businesses.find(x=>x.code===code); return b?b.name:'未分類'; }
+function whName(id){ const w = db.warehouses.find(x=>x.id===id); return w?w.warehouse_name:'(不明な保管場所)'; }
+function productName(id){ const p = db.products.find(x=>x.id===id); return p?p.product_name:'(不明な商品)'; }
+function activeWarehouses(){ return db.warehouses.filter(w=>w.active); }
+/* Stock is valued at the weighted average of recorded inbound costs; the master cost (next purchase) is the fallback */
+function stockUnitCost(p){
+  let q=0, c=0;
+  db.txns.forEach(t=>{ if(t.product_id===p.id && t.transaction_type==='INBOUND' && t.unit_cost!=null){ q+=t.quantity; c+=t.quantity*Number(t.unit_cost); } });
+  return q>0 ? c/q : Number(p.standard_cost)||0;
+}
+function taxRate(p){ return p.tax_rate!=null ? Number(p.tax_rate) : (FOOD_CODES.includes(p.product_code)?0.08:0.10); }
+function netPrice(p){ return Number(p.selling_price)>0 ? Number(p.selling_price)/(1+taxRate(p)) : 0; }
+function marginOf(p){ const n = netPrice(p); return n>0 ? (n-Number(p.standard_cost||0))/n*100 : null; }
+/* A product that has never moved and has no reorder point is not "out of stock": it simply has not arrived yet */
+function neverStocked(p){ return totalQty(p.id)===0 && Number(p.reorder_point||0)===0 && !db.txns.some(t=>t.product_id===p.id); }
+function isLow(p){ const q = totalQty(p.id); return !neverStocked(p) && (q===0 || q<Number(p.reorder_point||0)); }
+
+function statusBadge(p){
+  const q = totalQty(p.id);
+  if(neverStocked(p)) return '<span class="badge badge-quiet">未入荷</span>';
+  if(q===0) return '<span class="badge badge-solid">在庫切れ</span>';
+  if(q<Number(p.reorder_point||0)) return `<span class="badge">${icon('alert')}僅少</span>`;
+  return '';
+}
+function emptyHtml(title, text, action){
+  return `<div class="empty"><div class="empty-title">${esc(title)}</div>${text?`<p class="empty-text">${esc(text)}</p>`:''}${action||''}</div>`;
+}
+function bizOptions(selectEl, current){
+  const list = activeProducts();
+  const codes = db.businesses.filter(b=>list.some(p=>p.business_code===b.code));
+  const hasNone = list.some(p=>!p.business_code);
+  selectEl.innerHTML = [`<option value="全て">サービス: すべて (${list.length})</option>`]
+    .concat(codes.map(b=>`<option value="${esc(b.code)}">${esc(b.name)} (${list.filter(p=>p.business_code===b.code).length})</option>`))
+    .concat(hasNone?[`<option value="未分類">未分類 (${list.filter(p=>!p.business_code).length})</option>`]:[]).join('');
+  selectEl.value = current;
+  if(selectEl.value!==current) selectEl.value='全て';
+}
+function matchBiz(p, cat){ return cat==='全て' || (cat==='未分類' ? !p.business_code : p.business_code===cat); }
+
+/* ---------- navigation ---------- */
+function setSection(name){
+  section = SECTIONS.includes(name) ? name : 'inventory';
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+section));
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    if(b.dataset.section===section) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+  });
+  try{ history.replaceState(null,'','#'+section); }catch(e){}
+  window.scrollTo(0,0);
+}
+
+/* ---------- inventory ---------- */
+function renderKpis(){
+  const list = activeProducts();
+  const units = list.reduce((s,p)=>s+totalQty(p.id),0);
+  const lowCount = list.filter(isLow).length;
+  const value = list.reduce((s,p)=>s+stockUnitCost(p)*totalQty(p.id),0);
+  const retail = list.reduce((s,p)=>s+netPrice(p)*totalQty(p.id),0);
+  el('kpis').innerHTML = `
+    <div class="kpi"><span class="kpi-label">商品数</span><span class="kpi-value">${list.length}</span></div>
+    <div class="kpi"><span class="kpi-label">総在庫数</span><span class="kpi-value">${fmtNum(units)}</span></div>
+    <button type="button" class="kpi${lowCount>0?' is-alert':''}" data-act="toggleLow" aria-pressed="${invState.low}" title="在庫切れ・僅少の商品だけを表示">
+      <span class="kpi-label">${lowCount>0?icon('alert'):''}在庫切れ・僅少</span><span class="kpi-value">${lowCount}</span>
+    </button>
+    <div class="kpi"><span class="kpi-label">在庫金額</span><span class="kpi-value">${fmtYen(value)}</span></div>
+    <div class="kpi"><span class="kpi-label">想定売上高(税抜)</span><span class="kpi-value">${retail>0?fmtYen(retail):'—'}</span></div>`;
+}
+function barRowHtml(r, max){
+  const width = max>0 ? (r.value/max*100).toFixed(1) : 0;
+  const pct = r.share<1 ? '1%未満' : `${Math.round(r.share)}%`;
+  const inner = `<span class="bar-label">${esc(r.label)}</span><span class="bar-area"><span class="bar" style="width:${width}%"></span></span><span class="bar-val">${fmtYen(r.value)} <small>${pct}</small></span>`;
+  const desc = `${r.label}: ${fmtYen(r.value)}(${pct})`;
+  if(!r.act) return `<div class="bar-row${r.other?' is-other':''}" role="listitem" title="${esc(desc)}">${inner}</div>`;
+  const pressed = r.pressed===undefined ? '' : ` aria-pressed="${r.pressed}"`;
+  return `<div role="listitem"><button type="button" class="bar-row" data-act="${r.act}" data-id="${esc(r.id)}" data-fk="${r.act}-${esc(r.id)}"${pressed} title="${esc(desc)}" aria-label="${esc(desc)}">${inner}</button></div>`;
+}
+function renderCharts(){
+  const list = activeProducts();
+  const productRows = list.map(p=>({ id:p.id, label:p.product_name, value:stockUnitCost(p)*totalQty(p.id), act:'chartItem' }))
+    .filter(r=>r.value>0).sort((a,b)=>b.value-a.value);
+  const locVal = {};
+  list.forEach(p=>{ const c = stockUnitCost(p); db.inventories.filter(i=>i.product_id===p.id).forEach(i=>{ locVal[i.warehouse_id]=(locVal[i.warehouse_id]||0)+c*i.quantity; }); });
+  const locRows = Object.entries(locVal).filter(([,v])=>v>0)
+    .map(([id,value])=>({ id, label:whName(Number(id)), value, act:'chartLoc', pressed:String(invState.loc)===id }))
+    .sort((a,b)=>b.value-a.value);
+  const total = productRows.reduce((s,r)=>s+r.value,0);
+  const panels = [];
+  if(productRows.length>=2){
+    let rows = productRows;
+    if(rows.length>6){
+      const rest = rows.slice(5);
+      rows = rows.slice(0,5).concat({ label:`その他 ${rest.length}品目`, value:rest.reduce((s,r)=>s+r.value,0), other:true });
+    }
+    const max = Math.max(...rows.map(r=>r.value));
+    rows.forEach(r=>{ r.share = r.value/total*100; });
+    panels.push(`<section class="chart"><h2>在庫金額の多い商品</h2><div role="list">${rows.map(r=>barRowHtml(r,max)).join('')}</div></section>`);
+  }
+  if(locRows.length>=2){
+    const max = locRows[0].value;
+    locRows.forEach(r=>{ r.share = r.value/total*100; });
+    panels.push(`<section class="chart"><h2>保管場所別の在庫金額</h2><div role="list">${locRows.map(r=>barRowHtml(r,max)).join('')}</div></section>`);
+  }
+  const box = el('charts');
+  box.className = 'charts' + (panels.length===2?' cols2':'');
+  box.innerHTML = panels.join('');
+}
+function renderLocTabs(){
+  const whs = db.warehouses.filter(w=>w.active || db.inventories.some(i=>i.warehouse_id===w.id && i.quantity>0));
+  const known = whs.map(w=>String(w.id));
+  if(invState.loc!=='all' && !known.includes(String(invState.loc))) invState.loc='all';
+  const tab = (id,label,n)=>`<button type="button" role="tab" class="loc-tab" data-act="setLoc" data-loc="${esc(id)}" aria-selected="${String(invState.loc)===String(id)}"><span>${esc(label)}</span><span class="num">${fmtNum(n)}</span></button>`;
+  const all = activeProducts().reduce((s,p)=>s+totalQty(p.id),0);
+  const sumAt = id => db.inventories.filter(i=>i.warehouse_id===id).reduce((s,i)=>s+i.quantity,0);
+  el('locTabs').innerHTML = tab('all','全拠点',all) + whs.map(w=>tab(w.id,w.warehouse_name,sumAt(w.id))).join('');
+}
+function shownQty(p){ return qtyAt(p.id, invState.loc); }
+function filteredItems(){
+  const list = activeProducts().filter(p=>{
+    const sup = primarySupplier(p.id);
+    return matchBiz(p, invState.cat)
+      && (includes(p.product_name,invState.search) || includes(p.product_code,invState.search) || includes(sup&&sup.supplier_name,invState.search))
+      && (!invState.low || isLow(p))
+      && (invState.loc==='all' || shownQty(p)>0);
+  });
+  const val = p => shownQty(p)*stockUnitCost(p), d = invState.dir;
+  return list.sort((a,b)=>{
+    if(invState.sort==='name') return d*byText(a.product_name,b.product_name);
+    if(invState.sort==='qty') return d*(shownQty(a)-shownQty(b));
+    if(invState.sort==='value') return d*(val(a)-val(b));
+    const la=isLow(a), lb=isLow(b);
+    if(la!==lb) return la?-1:1;
+    const na=neverStocked(a), nb=neverStocked(b);
+    if(na!==nb) return na?1:-1;
+    return byText(a.product_code,b.product_code);
+  });
+}
+function sortHead(key,label,right){
+  const active = invState.sort===key;
+  const aria = active ? (invState.dir>0?'ascending':'descending') : 'none';
+  return `<th class="${right?'r':''}" aria-sort="${aria}"><button type="button" class="sort-btn" data-act="sort" data-key="${key}" data-active="${active}">${esc(label)}${icon(active&&invState.dir<0?'down':'up')}</button></th>`;
+}
+function stockMeter(p){
+  const th = Number(p.reorder_point||0);
+  if(th<=0 || invState.loc!=='all') return '';
+  const q = totalQty(p.id), u = p.unit||'個';
+  const pct = Math.min(100,q/(th*3)*100).toFixed(1);
+  return `<span class="meter" role="img" aria-label="在庫 ${q}${esc(u)}、僅少ライン ${th}${esc(u)}" title="在庫 ${q}${esc(u)} / 僅少ライン ${th}${esc(u)}"><span class="meter-fill${q<th?' is-low':''}" style="width:${pct}%"></span><span class="meter-tick" style="left:33.3%"></span></span>`;
+}
+function txnsOf(pid){ return db.txns.filter(t=>t.product_id===pid).sort((a,b)=>byText(b.transaction_date,a.transaction_date)||b.id-a.id); }
+function signed(n){ return (n>0?'+':'') + fmtNum(n); }
+function renderDetail(p){
+  const stock = stockMap(p.id);
+  const whIds = Object.keys(stock).map(Number).filter(id=>stock[id]>0);
+  const u = p.unit||'個';
+  const rows = whIds.length
+    ? whIds.map(id=>`<div class="loc-row"><div class="loc-name">${esc(whName(id))}</div><div class="qty">${fmtNum(stock[id])}<small>${esc(u)}</small></div></div>`).join('')
+    : '<p class="hint">在庫はありません。</p>';
+  const ops = canWrite() ? `<div class="op-row">
+      <button type="button" class="btn btn-sm" data-act="op" data-op="inbound" data-id="${p.id}">${icon('in')}入庫</button>
+      <button type="button" class="btn btn-sm" data-act="op" data-op="outbound" data-id="${p.id}">${icon('out')}出庫</button>
+      <button type="button" class="btn btn-sm" data-act="op" data-op="transfer" data-id="${p.id}">${icon('swap')}移管</button>
+      <button type="button" class="btn btn-sm" data-act="op" data-op="adjust" data-id="${p.id}">${icon('sliders')}棚卸・調整</button>
+    </div>` : '';
+  const recent = txnsOf(p.id).slice(0,5);
+  const sup = primarySupplier(p.id);
+  return `<div class="detail-inner">
+    <div>
+      <div class="detail-title">保管場所別の数量</div>${rows}${ops}
+      <div class="detail-title detail-gap">最近の入出庫</div>
+      ${recent.length?recent.map(t=>`<div class="meta-row"><span>${esc(t.transaction_date)} ${esc(TYPE_LABEL[t.transaction_type]||t.transaction_type)}<span class="sub-inline">${esc(whName(t.warehouse_id))}</span></span><span class="num">${signed(t.quantity)}${esc(u)}</span></div>`).join(''):'<p class="hint">まだありません。</p>'}
+    </div>
+    <div>
+      <div class="detail-title">情報</div>
+      <div class="meta-row"><span>商品コード</span><span>${esc(p.product_code)}</span></div>
+      <div class="meta-row only-mf"><span>サービス</span><span>${esc(bizName(p.business_code))}</span></div>
+      <div class="meta-row only-mf"><span>在庫金額</span><span class="num">${fmtYen(totalQty(p.id)*stockUnitCost(p))}</span></div>
+      <div class="meta-row"><span>在庫の単価</span><span class="num">${fmtYen(stockUnitCost(p))}</span></div>
+      <div class="meta-row"><span>僅少ライン</span><span class="num">${Number(p.reorder_point||0)>0?fmtNum(p.reorder_point)+esc(u):'未設定'}</span></div>
+      <div class="meta-row"><span>仕入れ先</span><span>${sup?esc(sup.supplier_name):'未設定'}</span></div>
+    </div>
+  </div>`;
+}
+function renderList(){
+  const list = filteredItems();
+  el('invCount').textContent = `${list.length}件`;
+  if(activeProducts().length===0){ el('listSlot').innerHTML = emptyHtml('商品はまだありません','商品マスタの内容を登録すると、ここに表示されます。'); return; }
+  if(list.length===0){ el('listSlot').innerHTML = emptyHtml('該当する在庫はありません','',`<button type="button" class="btn" data-act="clearInv">絞り込みを解除</button>`); return; }
+  const qtyLabel = invState.loc==='all' ? '在庫数' : `${whName(Number(invState.loc))}の数量`;
+  const rows = list.map(p=>{
+    const open = expandedIds.has(p.id);
+    const u = p.unit||'個', q = shownQty(p), sup = primarySupplier(p.id);
+    return `<tr class="row-click${open?' is-open':''}" data-row-act="toggle" data-id="${p.id}">
+      <td class="c-toggle"><button type="button" class="icon-btn" data-act="toggle" data-id="${p.id}" data-fk="tg-${p.id}" aria-expanded="${open}" aria-label="詳細を${open?'閉じる':'開く'}"><svg class="icon chev${open?' open':''}" aria-hidden="true"><use href="#i-right"/></svg></button></td>
+      <td class="c-name">
+        <div class="name">${esc(p.product_name)}</div>
+        <div class="sub">${esc(sup?sup.supplier_name:p.product_code)}</div>
+        <div class="only-m badge-line">${statusBadge(p)}</div>
+      </td>
+      <td class="dim only-d">${esc(bizName(p.business_code))}</td>
+      <td class="only-d">${statusBadge(p)}</td>
+      <td class="r c-qty"><span class="qty">${fmtNum(q)}<small>${esc(u)}</small></span>${stockMeter(p)}</td>
+      <td class="r num dim only-d">${fmtYen(q*stockUnitCost(p))}</td>
+    </tr>
+    ${open?`<tr class="detail"><td colspan="6">${renderDetail(p)}</td></tr>`:''}`;
+  }).join('');
+  el('listSlot').innerHTML = `<div class="tbl-wrap"><table class="tbl tbl-inv">
+    <thead><tr><th class="c-toggle" aria-label="開閉"></th>${sortHead('name','商品名')}<th>サービス</th><th>状態</th>${sortHead('qty',qtyLabel,true)}${sortHead('value','在庫金額',true)}</tr></thead>
+    <tbody>${rows}</tbody></table></div>${list.some(p=>stockMeter(p))?'<p class="chart-note">在庫数のバーの縦線は僅少ラインです。バーの右端は僅少ラインの3倍です。</p>':''}`;
+}
+function renderInventory(){
+  bizOptions(el('catSelect'),invState.cat);
+  renderKpis(); renderCharts(); renderLocTabs(); renderList();
+}
+
+/* ---------- history ---------- */
+function renderHistory(){
+  const sel = el('historyType');
+  if(!sel.options.length) sel.innerHTML = `<option value="全て">種類: すべて</option>` + ['INBOUND','OUTBOUND','TRANSFER','ADJUSTMENT'].map(k=>`<option value="${k}">${k==='TRANSFER'?'移管':TYPE_LABEL[k]}</option>`).join('');
+  sel.value = historyState.type;
+  const list = db.txns.filter(t=>{
+    const typeOk = historyState.type==='全て' || t.transaction_type===historyState.type || (historyState.type==='TRANSFER' && t.transaction_type.startsWith('TRANSFER'));
+    const s = historyState.search;
+    return typeOk && (includes(productName(t.product_id),s)||includes(t.remarks,s)||includes(t.created_by,s)||includes(t.destination,s));
+  }).sort((a,b)=>byText(b.transaction_date,a.transaction_date)||b.id-a.id);
+  el('historyCount').textContent = `${list.length}件`;
+  if(!list.length){ el('historySlot').innerHTML = emptyHtml('該当する履歴はありません'); return; }
+  const shown = list.slice(0,200);
+  el('historySlot').innerHTML = `<div class="tbl-wrap"><table class="tbl tbl-master">
+    <thead><tr><th>日付</th><th>種類</th><th>商品</th><th>保管場所</th><th class="r">数量</th><th>担当者</th><th>メモ</th></tr></thead>
+    <tbody>${shown.map(t=>{
+      const p = db.products.find(x=>x.id===t.product_id);
+      const note = [t.destination,t.remarks].filter(Boolean).join(' / ');
+      return `<tr>
+        <td class="num dim" data-label="日付"><span>${esc(t.transaction_date)}</span></td>
+        <td data-label="種類"><span>${esc(TYPE_LABEL[t.transaction_type]||t.transaction_type)}</span></td>
+        <td><div class="name">${esc(productName(t.product_id))}</div></td>
+        <td class="dim" data-label="保管場所"><span>${esc(whName(t.warehouse_id))}</span></td>
+        <td class="r num" data-label="数量"><span class="qty">${signed(t.quantity)}<small>${esc(p?p.unit||'個':'')}</small></span></td>
+        <td class="dim" data-label="担当者"><span>${t.created_by?esc(t.created_by):'<span class="none">—</span>'}</span></td>
+        <td class="dim" data-label="メモ"><span>${note?esc(note):'<span class="none">—</span>'}</span></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>${list.length>200?`<p class="chart-note">新しい順に200件を表示しています。検索で絞り込めます。</p>`:''}`;
+}
+
+/* ---------- products (read-only: the sheet is the master) ---------- */
+function marginMeter(m){
+  return `<span class="meter" role="img" aria-label="粗利率 ${Math.round(m)}%"><span class="meter-fill" style="width:${Math.max(0,Math.min(100,m)).toFixed(1)}%"></span></span>`;
+}
+function renderProducts(){
+  bizOptions(el('productCat'),productState.cat);
+  const list = activeProducts().filter(p=>{
+    const sup = primarySupplier(p.id);
+    return matchBiz(p,productState.cat) && (includes(p.product_name,productState.search)||includes(p.product_code,productState.search)||includes(sup&&sup.supplier_name,productState.search));
+  }).sort((a,b)=>byText(a.product_code,b.product_code));
+  if(productState.sort==='margin'){
+    list.sort((a,b)=>{
+      const ma=marginOf(a), mb=marginOf(b);
+      if(ma===null||mb===null) return ma===null?(mb===null?0:1):-1;
+      return productState.dir*(ma-mb);
+    });
+  }
+  const mActive = productState.sort==='margin';
+  el('productCount').textContent = `${list.length}件`;
+  if(!list.length){ el('productListSlot').innerHTML = emptyHtml('該当する商品はありません'); return; }
+  el('productListSlot').innerHTML = `<div class="tbl-wrap"><table class="tbl tbl-master">
+    <thead><tr><th>商品名</th><th>サービス</th><th>仕入れ先</th><th class="r">原価</th><th class="r">販売価格(税込)</th><th class="r" aria-sort="${mActive?(productState.dir>0?'ascending':'descending'):'none'}"><button type="button" class="sort-btn" data-act="sortMargin" data-fk="sortMargin" data-active="${mActive}">粗利率${icon(mActive&&productState.dir<0?'down':'up')}</button></th><th class="r">僅少ライン</th><th class="r">在庫</th></tr></thead>
+    <tbody>${list.map(p=>{
+      const sup = primarySupplier(p.id), u = p.unit||'個', m = marginOf(p);
+      const profit = m!=null ? netPrice(p)-Number(p.standard_cost||0) : null;
+      const th = Number(p.reorder_point||0);
+      return `<tr>
+        <td><div class="name">${esc(p.product_name)}</div><div class="sub">${esc(p.product_code)}${p.description?' / '+esc(p.description):''}</div></td>
+        <td class="dim" data-label="サービス"><span>${esc(bizName(p.business_code))}</span></td>
+        <td data-label="仕入れ先"><span>${sup?esc(sup.supplier_name):'<span class="badge">未設定</span>'}</span></td>
+        <td class="r num" data-label="原価"><span>${fmtYen(p.standard_cost)}</span></td>
+        <td class="r num" data-label="販売価格(税込)"><span>${Number(p.selling_price)>0?fmtYen(p.selling_price):'<span class="badge">未設定</span>'}</span></td>
+        <td class="r num" data-label="粗利率"><span>${m!=null?`<span class="${profit<0?'neg':''}">${Math.round(m)}%</span><div class="sub">${fmtYen(profit)}</div>${marginMeter(m)}`:'<span class="none">—</span>'}</span></td>
+        <td class="r num" data-label="僅少ライン"><span>${canWrite()?`<button type="button" class="btn btn-link num" data-act="editThreshold" data-id="${p.id}">${th>0?fmtNum(th)+esc(u):'設定する'}</button>`:(th>0?fmtNum(th)+esc(u):'—')}</span></td>
+        <td class="r" data-label="在庫"><span><span class="qty">${fmtNum(totalQty(p.id))}<small>${esc(u)}</small></span></span></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+/* ---------- suppliers & partners ---------- */
+function contactHtml(x){
+  const lines = [];
+  if(x.phone) lines.push(`<a class="contact-line num" href="tel:${esc(String(x.phone).replace(/[^0-9+]/g,''))}">${esc(x.phone)}</a>`);
+  if(x.email) lines.push(`<a class="contact-line" href="mailto:${esc(x.email)}">${esc(x.email)}</a>`);
+  if(x.address) lines.push(`<span class="contact-line dim">${esc(x.address)}</span>`);
+  return lines.length ? `<div>${lines.join('')}</div>` : '<span class="none">—</span>';
+}
+function actionCell(editAct, offAct, id, name){
+  if(!canWrite()) return '<td class="c-actions"></td>';
+  return `<td class="c-actions">
+    <button type="button" class="icon-btn" data-act="${editAct}" data-id="${id}" title="編集" aria-label="${esc(name)}を編集">${icon('pencil')}</button>
+    <button type="button" class="icon-btn" data-act="${offAct}" data-id="${id}" title="無効にする" aria-label="${esc(name)}を無効にする">${icon('ban')}</button>
+  </td>`;
+}
+function renderSuppliers(){
+  const list = db.suppliers.filter(s=>s.active && includes(s.supplier_name,supplierState.search)).sort((a,b)=>byText(a.supplier_name,b.supplier_name));
+  el('supplierCount').textContent = `${list.length}件`;
+  if(!list.length){ el('supplierListSlot').innerHTML = emptyHtml(supplierState.search?'該当する仕入れ先はありません':'仕入れ先はまだありません'); return; }
+  el('supplierListSlot').innerHTML = `<div class="tbl-wrap"><table class="tbl tbl-master">
+    <thead><tr><th>会社名・屋号</th><th>担当者</th><th>連絡先</th><th class="r">商品数</th><th class="c-actions" aria-label="操作"></th></tr></thead>
+    <tbody>${list.map(s=>`<tr>
+      <td><div class="name">${esc(s.supplier_name)}</div></td>
+      <td data-label="担当者"><span>${s.contact_person?esc(s.contact_person):'<span class="none">—</span>'}</span></td>
+      <td data-label="連絡先">${contactHtml(s)}</td>
+      <td class="r num" data-label="商品数"><span>${db.productSuppliers.filter(x=>x.supplier_id===s.id).length}件</span></td>
+      ${actionCell('editSupplier','offSupplier',s.id,s.supplier_name)}
+    </tr>`).join('')}</tbody></table></div>`;
+}
+function partnerRows(){
+  return db.warehouses.filter(w=>w.warehouse_type==='consignment' && w.active)
+    .map(w=>({ w, c: db.customers.find(c=>c.id===w.customer_id)||{} }));
+}
+function renderPartners(){
+  const list = partnerRows().filter(r=>includes(r.w.warehouse_name,partnerState.search)).sort((a,b)=>byText(a.w.warehouse_name,b.w.warehouse_name));
+  el('partnerCount').textContent = `${list.length}件`;
+  if(!list.length){ el('partnerListSlot').innerHTML = emptyHtml(partnerState.search?'該当する委託先はありません':'販売委託先はまだありません','登録すると、委託先ごとの預け在庫を管理できます。'); return; }
+  el('partnerListSlot').innerHTML = `<div class="tbl-wrap"><table class="tbl tbl-master">
+    <thead><tr><th>店舗名・会社名</th><th>連絡先</th><th>メモ</th><th class="r">預け在庫</th><th class="c-actions" aria-label="操作"></th></tr></thead>
+    <tbody>${list.map(({w,c})=>{
+      const n = db.inventories.filter(i=>i.warehouse_id===w.id).reduce((s,i)=>s+i.quantity,0);
+      return `<tr>
+        <td><div class="name">${esc(w.warehouse_name)}</div></td>
+        <td data-label="連絡先">${contactHtml(c)}</td>
+        <td class="dim" data-label="メモ"><span>${c.notes?esc(c.notes):'<span class="none">—</span>'}</span></td>
+        <td class="r" data-label="預け在庫"><span><button type="button" class="btn btn-link num" data-act="viewLoc" data-id="${w.id}" title="この委託先の在庫を見る">${fmtNum(n)}点</button></span></td>
+        ${actionCell('editPartner','offPartner',w.id,w.warehouse_name)}
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+function renderAll(){
+  const fk = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.fk : null;
+  renderInventory(); renderHistory(); renderProducts(); renderSuppliers(); renderPartners();
+  document.querySelectorAll('[data-write]').forEach(n=>{ n.hidden = !canWrite(); });
+  if(fk){ const n = document.querySelector(`[data-fk="${CSS.escape(fk)}"]`); if(n) n.focus(); }
+}
+
+/* ---------- stock operations: all go through fn_web_* so the ledger stays consistent ---------- */
+function productOptions(){
+  return [{value:'',label:'選択してください'}].concat(activeProducts().map(p=>({value:p.id,label:`${p.product_name}(${p.product_code})`})));
+}
+function warehouseOptions(list){ return list.map(w=>({value:w.id,label:w.warehouse_name})); }
+function openOp(kind, productId){
+  const titles = { inbound:'入庫', outbound:'出庫', transfer:'移管', adjust:'棚卸・調整' };
+  const whs = activeWarehouses();
+  const productF = productId
+    ? `<div class="field full"><span class="label">商品</span><div class="plain-value">${esc(productName(productId))}</div><input type="hidden" name="product" value="${productId}"></div>`
+    : field({name:'product',label:'商品',required:true,value:'',options:productOptions()});
+  const dateF = field({name:'date',label:kind==='adjust'?'調整日':'日付',type:'date',half:true,value:today(),required:true});
+  const noteF = field({name:'remarks',label:'メモ',placeholder:'任意'});
+  let body = productF;
+  const pid0 = productId || null;
+  const defaultWh = pid0 ? (Object.entries(stockMap(pid0)).find(([,q])=>q>0)||[whs[0]&&whs[0].id])[0] : (whs[0]&&whs[0].id);
+  if(kind==='inbound'){
+    const sup = pid0 ? primarySupplier(pid0) : null;
+    const lastCost = pid0 ? db.products.find(p=>p.id===pid0).standard_cost : '';
+    body += field({name:'wh',label:'入庫先',half:true,value:defaultWh,options:warehouseOptions(whs)})
+      + field({name:'qty',label:'数量',type:'number',min:1,half:true,required:true})
+      + dateF
+      + field({name:'cost',label:'仕入単価(円・税抜)',type:'number',half:true,value:lastCost,after:'<p class="hint">実際の金額に直すと、在庫金額に反映されます。</p>'})
+      + field({name:'supplier',label:'仕入れ先',value:sup?sup.id:'',options:[{value:'',label:'未選択'}].concat(db.suppliers.filter(s=>s.active).map(s=>({value:s.id,label:s.supplier_name})))});
+  } else if(kind==='outbound'){
+    body += field({name:'wh',label:'出庫元',half:true,value:defaultWh,options:warehouseOptions(whs)})
+      + field({name:'qty',label:'数量',type:'number',min:1,half:true,required:true})
+      + dateF
+      + field({name:'destination',label:'出庫先',half:true,placeholder:'チーム名、販売先など'});
+  } else if(kind==='transfer'){
+    const to = whs.find(w=>String(w.id)!==String(defaultWh));
+    body += field({name:'wh',label:'移管元',half:true,value:defaultWh,options:warehouseOptions(whs)})
+      + field({name:'to',label:'移管先',half:true,value:to?to.id:'',options:warehouseOptions(whs)})
+      + field({name:'qty',label:'数量',type:'number',min:1,half:true,required:true})
+      + dateF;
+  } else {
+    body += field({name:'wh',label:'保管場所',half:true,value:defaultWh,options:warehouseOptions(whs)})
+      + field({name:'after',label:'実際の数量',type:'number',half:true,required:true,after:'<p class="hint" id="adjustNow"></p>'})
+      + field({name:'reason',label:'理由',half:true,value:REASONS[0],options:REASONS.map(r=>({value:r,label:r}))})
+      + dateF;
+  }
+  body += noteF + formErrorSlot;
+  openDrawer(titles[kind], body, vals=>submitOp(kind, vals), '登録');
+  updateAdjustHint();
+}
+function updateAdjustHint(){
+  const out = el('adjustNow'); if(!out) return;
+  const v = formValues();
+  out.textContent = v.product && v.wh ? `現在の記録: ${fmtNum(qtyAt(Number(v.product),v.wh))}` : '';
+}
+async function submitOp(kind, v){
+  clearFieldErrors();
+  if(!v.product){ setFieldError('product','商品を選択してください。'); return; }
+  if(!v.date){ setFieldError('date','日付を入力してください。'); return; }
+  const base = { p_product_id:Number(v.product) };
+  const remarks = v.remarks || null;
+  let fn, params, done;
+  if(kind==='adjust'){
+    const after = nonNegInt(v.after);
+    if(after===null){ setFieldError('after','0以上の整数で入力してください。'); return; }
+    fn='fn_web_adjustment'; done='調整を登録しました';
+    params={...base,p_warehouse_id:Number(v.wh),p_quantity_after:after,p_reason:v.reason,p_adjusted_at:v.date,p_remarks:remarks};
+  } else {
+    const qty = posInt(v.qty);
+    if(qty===null){ setFieldError('qty','1以上の整数で入力してください。'); return; }
+    if(kind==='inbound'){
+      if(v.cost!=='' && !(Number(v.cost)>=0)){ setFieldError('cost','0以上で入力してください。'); return; }
+      fn='fn_web_inbound'; done='入庫を登録しました';
+      params={...base,p_warehouse_id:Number(v.wh),p_quantity:qty,p_transaction_date:v.date,p_supplier_id:v.supplier?Number(v.supplier):null,p_unit_cost:v.cost===''?null:Number(v.cost),p_remarks:remarks};
+    } else if(kind==='outbound'){
+      fn='fn_web_outbound'; done='出庫を登録しました';
+      params={...base,p_warehouse_id:Number(v.wh),p_quantity:qty,p_transaction_date:v.date,p_destination:v.destination||null,p_remarks:remarks};
+    } else {
+      if(v.wh===v.to){ setFieldError('to','移管元と違う場所を選んでください。'); return; }
+      fn='fn_web_transfer'; done='移管を登録しました';
+      params={...base,p_from_warehouse_id:Number(v.wh),p_to_warehouse_id:Number(v.to),p_quantity:qty,p_transfer_date:v.date,p_remarks:remarks};
+    }
+  }
+  const { error } = await sb.rpc(fn, params);
+  if(error){ setFormError(errText(error)); return; }
+  expandedIds.add(Number(v.product));
+  closeDrawer();
+  await refresh();
+  showToast(done);
+}
+function openThreshold(p){
+  openDrawer('僅少ラインを設定',
+    `<div class="field full"><span class="label">商品</span><div class="plain-value">${esc(p.product_name)}</div></div>`
+    + field({name:'threshold',label:`僅少ライン(${p.unit||'個'})`,type:'number',half:true,value:p.reorder_point,after:'<p class="hint">0にすると未設定になります。</p>'})
+    + formErrorSlot,
+    async v=>{
+      clearFieldErrors();
+      const n = nonNegInt(v.threshold);
+      if(n===null){ setFieldError('threshold','0以上の整数で入力してください。'); return; }
+      const { error } = await sb.rpc('fn_web_set_reorder_point',{p_product_id:p.id,p_reorder_point:n});
+      if(error){ setFormError(errText(error)); return; }
+      closeDrawer(); await refresh(); showToast('僅少ラインを保存しました');
+    });
+}
+function nextCode(list, column, prefix, width){
+  const nums = list.map(r=>String(r[column]||'')).filter(c=>c.startsWith(prefix)).map(c=>parseInt(c.slice(prefix.length),10)).filter(n=>!isNaN(n));
+  return prefix + String((nums.length?Math.max(...nums):0)+1).padStart(width,'0');
+}
+function openSupplierForm(s){
+  openDrawer(s?'仕入れ先を編集':'仕入れ先を追加',
+    field({name:'name',label:'会社名・屋号',required:true,value:s&&s.supplier_name,placeholder:'例: 〇〇縫製工場'})
+    + field({name:'contact',label:'担当者名',half:true,value:s&&s.contact_person})
+    + field({name:'phone',label:'電話番号',half:true,type:'tel',value:s&&s.phone})
+    + field({name:'email',label:'メールアドレス',type:'email',value:s&&s.email})
+    + field({name:'address',label:'住所',value:s&&s.address})
+    + formErrorSlot,
+    async v=>{
+      clearFieldErrors();
+      if(!v.name){ setFieldError('name','会社名・屋号を入力してください。'); return; }
+      const row = { supplier_name:v.name, contact_person:v.contact||null, phone:v.phone||null, email:v.email||null, address:v.address||null };
+      const q = s ? sb.from('suppliers').update(row).eq('id',s.id)
+                  : sb.from('suppliers').insert({...row, supplier_code:nextCode(db.suppliers,'supplier_code','S',3)});
+      const { error } = await q;
+      if(error){ setFormError(errText(error)); return; }
+      closeDrawer(); await refresh(); showToast('仕入れ先を保存しました');
+    });
+}
+function openPartnerForm(w){
+  const c = w ? (db.customers.find(x=>x.id===w.customer_id)||{}) : {};
+  openDrawer(w?'委託先を編集':'委託先を追加',
+    field({name:'name',label:'店舗名・会社名',required:true,value:w&&w.warehouse_name,placeholder:'例: 〇〇スポーツショップ'})
+    + field({name:'phone',label:'電話番号',half:true,type:'tel',value:c.phone})
+    + field({name:'email',label:'メールアドレス',half:true,type:'email',value:c.email})
+    + field({name:'address',label:'住所',value:c.address})
+    + field({name:'notes',label:'メモ',value:c.notes,placeholder:'担当者、手数料率、精算サイクルなど'})
+    + formErrorSlot,
+    async v=>{
+      clearFieldErrors();
+      if(!v.name){ setFieldError('name','店舗名・会社名を入力してください。'); return; }
+      const cust = { name:v.name, phone:v.phone||null, email:v.email||null, address:v.address||null, notes:v.notes||null };
+      if(w){
+        const a = await sb.from('customers').update(cust).eq('id',w.customer_id);
+        if(a.error){ setFormError(errText(a.error)); return; }
+        const b = await sb.from('warehouses').update({warehouse_name:v.name}).eq('id',w.id);
+        if(b.error){ setFormError(errText(b.error)); return; }
+      } else {
+        const a = await sb.from('customers').insert({...cust, customer_type:'company'}).select().single();
+        if(a.error){ setFormError(errText(a.error)); return; }
+        const b = await sb.from('warehouses').insert({ warehouse_code:nextCode(db.warehouses,'warehouse_code','C',2), warehouse_name:v.name, warehouse_type:'consignment', customer_id:a.data.id });
+        if(b.error){ setFormError(errText(b.error)); return; }
+      }
+      closeDrawer(); await refresh(); showToast('委託先を保存しました');
+    });
+}
+
+/* ---------- actions ---------- */
+const num = t => Number(t.dataset.id);
+const actions = {
+  nav(t){ setSection(t.dataset.section); },
+  closeDrawer(){ closeDrawer(); },
+  async signOut(){ await sb.auth.signOut(); me=null; showLogin(); },
+  opNew(){ openOpChooser(); },
+  op(t){ openOp(t.dataset.op, num(t)); },
+  addSupplier(){ openSupplierForm(null); },
+  addPartner(){ openPartnerForm(null); },
+  editSupplier(t){ const s = db.suppliers.find(x=>x.id===num(t)); if(s) openSupplierForm(s); },
+  editPartner(t){ const w = db.warehouses.find(x=>x.id===num(t)); if(w) openPartnerForm(w); },
+  editThreshold(t){ const p = db.products.find(x=>x.id===num(t)); if(p) openThreshold(p); },
+  async offSupplier(t){
+    const s = db.suppliers.find(x=>x.id===num(t)); if(!s) return;
+    if(!(await confirmDialog('仕入れ先を無効にしますか?',`「${s.supplier_name}」を一覧から外します。過去の履歴は残ります。`,'無効にする'))) return;
+    const { error } = await sb.from('suppliers').update({active:false}).eq('id',s.id);
+    if(error){ showToast(errText(error)); return; }
+    await refresh(); showToast('仕入れ先を無効にしました');
+  },
+  async offPartner(t){
+    const w = db.warehouses.find(x=>x.id===num(t)); if(!w) return;
+    const n = db.inventories.filter(i=>i.warehouse_id===w.id).reduce((s,i)=>s+i.quantity,0);
+    if(n>0){ showToast(`預け在庫が${n}点あります。先に移管してください。`); return; }
+    if(!(await confirmDialog('委託先を無効にしますか?',`「${w.warehouse_name}」を一覧から外します。過去の履歴は残ります。`,'無効にする'))) return;
+    const { error } = await sb.from('warehouses').update({active:false}).eq('id',w.id);
+    if(error){ showToast(errText(error)); return; }
+    await refresh(); showToast('委託先を無効にしました');
+  },
+  toggleLow(){ invState.low = !invState.low; renderInventory(); },
+  setLoc(t){ invState.loc = t.dataset.loc; renderInventory(); },
+  viewLoc(t){ clearInv(); invState.loc = t.dataset.id; setSection('inventory'); renderInventory(); },
+  clearInv(){ clearInv(); renderInventory(); },
+  chartLoc(t){ invState.loc = String(invState.loc)===t.dataset.id ? 'all' : t.dataset.id; renderAll(); },
+  chartItem(t){
+    const id = num(t);
+    clearInv(); expandedIds.add(id); renderAll();
+    const row = document.querySelector(`tr[data-id="${id}"]`);
+    if(row){ row.scrollIntoView({block:'center'}); const b=row.querySelector('[data-act="toggle"]'); if(b) b.focus(); }
+  },
+  sort(t){
+    const k = t.dataset.key;
+    if(invState.sort===k){ if(invState.dir===1) invState.dir=-1; else { invState.sort=null; invState.dir=1; } }
+    else { invState.sort=k; invState.dir = k==='name' ? 1 : -1; }
+    renderList();
+  },
+  sortMargin(){
+    if(productState.sort!=='margin'){ productState.sort='margin'; productState.dir=-1; }
+    else if(productState.dir<0){ productState.dir=1; }
+    else { productState.sort=null; productState.dir=-1; }
+    renderProducts();
+  },
+  toggle(t){ const id=num(t); if(expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id); renderAll(); },
+  chooseOp(t){ openOp(t.dataset.op, null); }
+};
+function clearInv(){ invState.cat='全て'; invState.low=false; invState.loc='all'; invState.search=''; el('searchBox').value=''; }
+function openOpChooser(){
+  el('drawerTitle').textContent = '入出庫を登録';
+  el('drawerBody').innerHTML = `<div class="field full op-choices">
+    <button type="button" class="btn" data-act="chooseOp" data-op="inbound">${icon('in')}入庫</button>
+    <button type="button" class="btn" data-act="chooseOp" data-op="outbound">${icon('out')}出庫</button>
+    <button type="button" class="btn" data-act="chooseOp" data-op="transfer">${icon('swap')}移管</button>
+    <button type="button" class="btn" data-act="chooseOp" data-op="adjust">${icon('sliders')}棚卸・調整</button>
+  </div>`;
+  drawerSubmit = null;
+  el('drawerSubmit').hidden = true;
+  if(!el('drawer').open) el('drawer').showModal();
+}
+
+document.addEventListener('click', e=>{
+  const t = e.target.closest('[data-act]');
+  if(t){ actions[t.dataset.act](t,e); return; }
+  if(e.target.closest('a,button,input,select,label,.detail')) return;
+  const row = e.target.closest('[data-row-act]');
+  if(row) actions[row.dataset.rowAct](row,e);
+});
+document.addEventListener('input', e=>{
+  if(e.target.getAttribute && e.target.getAttribute('aria-invalid')){
+    e.target.removeAttribute('aria-invalid');
+    const err = el('drawerBody').querySelector(`[data-err="${e.target.name}"]`);
+    if(err) err.textContent = '';
+  }
+});
+document.addEventListener('change', e=>{ if(e.target.name==='wh'||e.target.name==='product') updateAdjustHint(); });
+el('drawerForm').addEventListener('submit', e=>e.preventDefault());
+el('drawerBody').addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.isComposing && e.target.tagName==='INPUT'){ e.preventDefault(); runDrawerSubmit(); }
+});
+el('drawerSubmit').addEventListener('click', ()=>runDrawerSubmit());
+async function runDrawerSubmit(){
+  if(!drawerSubmit || drawerBusy) return;
+  drawerBusy = true;
+  const b = el('drawerSubmit'); b.disabled = true;
+  try{ await drawerSubmit(formValues()); }
+  catch(err){ setFormError(errText(err)); }
+  finally{ drawerBusy = false; b.disabled = false; }
+}
+el('drawer').addEventListener('click', e=>{ if(e.target===el('drawer')) closeDrawer(); });
+el('drawer').addEventListener('close', ()=>{ el('drawerSubmit').hidden = false; });
+el('confirmDlg').addEventListener('click', e=>{ if(e.target===el('confirmDlg')) el('confirmDlg').close(); });
+el('searchBox').addEventListener('input', e=>{ invState.search=e.target.value; renderList(); });
+el('catSelect').addEventListener('change', e=>{ invState.cat=e.target.value; renderList(); });
+el('historySearch').addEventListener('input', e=>{ historyState.search=e.target.value; renderHistory(); });
+el('historyType').addEventListener('change', e=>{ historyState.type=e.target.value; renderHistory(); });
+el('productSearch').addEventListener('input', e=>{ productState.search=e.target.value; renderProducts(); });
+el('productCat').addEventListener('change', e=>{ productState.cat=e.target.value; renderProducts(); });
+el('supplierSearch').addEventListener('input', e=>{ supplierState.search=e.target.value; renderSuppliers(); });
+el('partnerSearch').addEventListener('input', e=>{ partnerState.search=e.target.value; renderPartners(); });
+el('sheetLink').href = SHEET_URL;
+/* pick up changes made on another device when returning to the page */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible' && me && !el('drawer').open) refresh().catch(()=>{});
+});
+
+/* ---------- login ---------- */
+function showOnly(id){ ['loginView','messageView','appView'].forEach(v=>{ el(v).hidden = v!==id; }); }
+function showLogin(){ showOnly('loginView'); el('loginPass').value=''; el('loginEmail').focus(); }
+function showMessage(title, text, withLogout){
+  showOnly('messageView');
+  el('messageTitle').textContent = title;
+  el('messageText').textContent = text;
+  el('messageBtn').hidden = !withLogout;
+}
+async function enter(){
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user){ showLogin(); return; }
+  const { data, error } = await sb.from('members').select('display_name,role,active').eq('user_id',user.id);
+  if(error) throw error;
+  const row = (data||[]).find(m=>m.active);
+  if(!row){ showMessage('利用できません','このアカウントはメンバーに登録されていません。管理者に確認してください。',true); return; }
+  me = row;
+  el('meName').textContent = me.display_name;
+  await loadAll();
+  showOnly('appView');
+  setSection((location.hash||'').slice(1));
+  renderAll();
+}
+el('loginForm').addEventListener('submit', e=>e.preventDefault());
+el('loginBtn').addEventListener('click', ()=>doLogin());
+['loginEmail','loginPass'].forEach(id=>el(id).addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.isComposing){ e.preventDefault(); doLogin(); }
+}));
+let loginBusy = false;
+async function doLogin(){
+  if(loginBusy) return;
+  const err = el('loginErr'), btn = el('loginBtn');
+  err.textContent='';
+  const email = el('loginEmail').value.trim(), password = el('loginPass').value;
+  if(!email || !password){ err.textContent='メールアドレスとパスワードを入力してください。'; return; }
+  if(!sb){ err.textContent='読み込みが完了していません。ページを再読み込みしてください。'; return; }
+  loginBusy = true; btn.disabled = true; btn.textContent = 'ログイン中…';
+  try{
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){ err.textContent = /invalid/i.test(error.message) ? 'メールアドレスまたはパスワードが違います。' : errText(error); return; }
+    await enter();
+  }catch(ex){ err.textContent = errText(ex); }
+  finally{ loginBusy = false; btn.disabled = false; btn.textContent = 'ログイン'; }
+}
+(async function init(){
+  if(!window.supabase){ showMessage('読み込めませんでした','通信状態を確認して、ページを再読み込みしてください。',false); return; }
+  const timedFetch = (url, init) => Promise.race([
+    fetch(url, init),
+    new Promise((_, reject)=>setTimeout(()=>reject(new TypeError('Failed to fetch')), 20000))
+  ]);
+  sb = window.supabase.createClient(SB_URL, SB_KEY, {
+    global: { fetch: timedFetch },
+    auth: { lock: async (_name, _timeout, fn) => fn() }
+  });
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    if(session) await enter(); else showLogin();
+  }catch(ex){ showMessage('読み込めませんでした',errText(ex),true); }
+})();
+</script>
+</body>
+</html>
