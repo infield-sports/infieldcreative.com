@@ -360,6 +360,7 @@ a.btn{color:inherit;text-decoration:none;}
 @media (max-width:720px){.tbl tr.row-click:hover>td{background:none;}.tbl tr.row-click:hover{background:var(--hover);}}
 .drawer-msg{padding:8px 24px;font-size:13px;font-weight:600;color:var(--accent-text);border-top:1px solid var(--line);overflow-wrap:anywhere;}
 @media (max-width:720px){.drawer-msg{padding:8px 16px;}}
+.head-refresh{color:var(--ink-3);}
 .v-edit{font-size:12px;font-weight:400;}
 .v-link{display:block;margin-top:4px;font-size:12px;font-weight:400;}
 .vf-presets{display:flex;flex-wrap:wrap;gap:8px;}
@@ -407,6 +408,7 @@ a.btn{color:inherit;text-decoration:none;}
   <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></symbol>
   <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
   <symbol id="i-in" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
@@ -455,6 +457,7 @@ a.btn{color:inherit;text-decoration:none;}
       <div class="page-head">
         <h1>在庫</h1>
         <div class="head-actions">
+          <button type="button" class="icon-btn head-refresh" data-act="refreshData" title="最新の状態に更新" aria-label="最新の状態に更新"><svg class="icon"><use href="#i-refresh"/></svg></button>
           <button type="button" class="icon-btn only-m" data-act="signOut" aria-label="ログアウト"><svg class="icon"><use href="#i-logout"/></svg></button>
           <button class="btn btn-primary" data-act="opNew" data-write><svg class="icon"><use href="#i-plus"/></svg>入出庫を登録</button>
         </div>
@@ -483,7 +486,7 @@ a.btn{color:inherit;text-decoration:none;}
     <section class="view" id="view-products">
       <div class="page-head">
         <h1>商品</h1>
-        <a class="btn" id="sheetLink" target="_blank" rel="noopener">商品マスタを開く</a>
+        <div class="head-actions"><button type="button" class="icon-btn head-refresh" data-act="refreshData" title="最新の状態に更新" aria-label="最新の状態に更新"><svg class="icon"><use href="#i-refresh"/></svg></button><a class="btn" id="sheetLink" target="_blank" rel="noopener">商品マスタを開く</a></div>
       </div>
       <div class="toolbar">
         <div class="search"><svg class="icon"><use href="#i-search"/></svg><input class="input" id="productSearch" type="search" placeholder="商品名・コード・仕入れ先で検索" aria-label="商品を検索"></div>
@@ -1432,6 +1435,12 @@ const actions = {
   closeDrawer(){ closeDrawer(); },
   async signOut(){ await sb.auth.signOut(); me=null; showLogin(); },
   opNew(){ openOpChooser(); },
+  async refreshData(t){
+    t.disabled = true;
+    try{ await refresh(); showToast('最新の状態に更新しました'); }
+    catch(err){ showToast(errText(err)); }
+    finally{ t.disabled = false; }
+  },
   op(t){ openOp(t.dataset.op, t.dataset.id); },
   setVariants(t){ openVariantForm(t.dataset.id); },
   editVariant(t){ const p = db.products.find(x=>x.id===num(t)); if(p) openVariantEdit(p); },
@@ -1548,9 +1557,15 @@ el('supplierSearch').addEventListener('input', e=>{ supplierState.search=e.targe
 el('partnerSearch').addEventListener('input', e=>{ partnerState.search=e.target.value; renderPartners(); });
 el('sheetLink').href = SHEET_URL;
 /* pick up changes made on another device when returning to the page */
-document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState==='visible' && me && !el('drawer').open) refresh().catch(()=>{});
-});
+let lastAutoRefresh = 0;
+function autoRefresh(){
+  if(document.visibilityState!=='visible' || !me || el('drawer').open || Date.now()-lastAutoRefresh<5000) return;
+  lastAutoRefresh = Date.now();
+  refresh().catch(()=>{});
+}
+document.addEventListener('visibilitychange', autoRefresh);
+window.addEventListener('focus', autoRefresh);
+window.addEventListener('pageshow', autoRefresh);
 
 /* ---------- login ---------- */
 function showOnly(id){ ['loginView','messageView','appView'].forEach(v=>{ el(v).hidden = v!==id; }); }
