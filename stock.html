@@ -705,7 +705,7 @@ function productName(id){ const p = db.products.find(x=>x.id===id); return p?ful
 /* A size or capacity is one row in products (its own stock and history), tied together by product_models */
 function variantLabel(p){ return Object.values(p.variant_attrs||{}).filter(x=>x!==null&&x!=='').join(' / '); }
 function fullName(p){ const v = variantLabel(p); return v?`${p.product_name} / ${v}`:p.product_name; }
-const SIZE_ORDER = ['XXS','XS','S','M','L','XL','XXL','2XL','3XL','4XL','5XL','FREE','F'];
+const SIZE_ORDER = ['XXS','XS','S','M','L','LL','XL','XXL','2XL','3L','3XL','4L','4XL','5L','5XL','FREE','F'];
 const UNDECIDED = '未確定';
 function isUndecided(p){ return variantLabel(p)===UNDECIDED; }
 function byVariant(a,b){
@@ -744,7 +744,7 @@ function stockUnitCost(p){
   db.txns.forEach(t=>{ if(t.product_id===p.id && t.transaction_type==='INBOUND' && t.unit_cost!=null){ q+=t.quantity; c+=t.quantity*Number(t.unit_cost); } });
   return q>0 ? c/q : Number(p.standard_cost)||0;
 }
-function taxRate(p){ return p.tax_rate!=null ? Number(p.tax_rate) : (FOOD_CODES.includes(p.product_code)?0.08:0.10); }
+function taxRate(p){ return p.tax_rate!=null ? Number(p.tax_rate) : (FOOD_CODES.some(c=>p.product_code===c||p.product_code.startsWith(c+'-'))?0.08:0.10); }
 function netPrice(p){ return Number(p.selling_price)>0 ? Number(p.selling_price)/(1+taxRate(p)) : 0; }
 function marginOf(p){ const n = netPrice(p); return n>0 ? (n-Number(p.standard_cost||0))/n*100 : null; }
 /* A product that has never moved and has no reorder point is not "out of stock": it simply has not arrived yet */
@@ -1243,7 +1243,7 @@ function openThreshold(p){
 }
 /* ---------- sizes and capacities: one form to split a product, add to it, and hand out the current stock ---------- */
 const VARIANT_KEYS = ['サイズ','容量','カラー','その他'];
-const SIZE_PRESETS = ['XS','S','M','L','XL','2XL','3XL','FREE'];
+const SIZE_PRESETS = ['XS','S','M','L','XL','2XL','3XL','3L','4L','FREE'];
 let variantForm = null;
 function variantActionLabel(g){
   if(!g.model) return 'サイズ・容量を設定';
