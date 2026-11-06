@@ -358,6 +358,19 @@ a.btn{color:inherit;text-decoration:none;}
 .drawer-body .plain-value{min-height:0;}
 .chart-note{overflow-wrap:anywhere;}
 @media (max-width:720px){.tbl tr.row-click:hover>td{background:none;}.tbl tr.row-click:hover{background:var(--hover);}}
+.v-edit{font-size:12px;font-weight:400;}
+.v-link{display:block;margin-top:4px;font-size:12px;font-weight:400;}
+.vf-presets{display:flex;flex-wrap:wrap;gap:8px;}
+.vf-head,.vf-line{display:grid;grid-template-columns:minmax(0,1fr) 80px 88px 32px;gap:8px;align-items:center;}
+.vf-head{font-size:12px;color:var(--ink-3);margin:8px 0 4px;}
+.vf-row{padding:8px 0;border-bottom:1px solid var(--line);}
+.vf-row .input{min-width:0;width:100%;}
+.vf-fixed{font-weight:500;overflow-wrap:anywhere;}
+.vf-money{font-weight:400;color:var(--ink-2);font-size:13px;}
+.field .vf-alloc{display:grid;grid-template-columns:minmax(0,1fr) 88px;align-items:center;gap:8px;margin:8px 40px 0 0;font-size:13px;color:var(--ink-2);font-weight:400;}
+.vf-add{margin-top:8px;}
+.vf-remain:empty{display:none;}
+.vf-remain{margin-top:8px;font-weight:500;}
 .v-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
 .v-chip{display:inline-flex;align-items:baseline;gap:4px;padding:0 8px;min-height:24px;line-height:24px;font-size:12px;color:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);}
 .v-chip b{font-weight:600;color:var(--ink);}
@@ -685,7 +698,10 @@ function productName(id){ const p = db.products.find(x=>x.id===id); return p?ful
 function variantLabel(p){ return Object.values(p.variant_attrs||{}).filter(x=>x!==null&&x!=='').join(' / '); }
 function fullName(p){ const v = variantLabel(p); return v?`${p.product_name} / ${v}`:p.product_name; }
 const SIZE_ORDER = ['XXS','XS','S','M','L','XL','XXL','2XL','3XL','4XL','5XL','FREE','F'];
+const UNDECIDED = '未確定';
+function isUndecided(p){ return variantLabel(p)===UNDECIDED; }
 function byVariant(a,b){
+  if(isUndecided(a)!==isUndecided(b)) return isUndecided(a)?1:-1;
   const la = variantLabel(a).toUpperCase(), lb = variantLabel(b).toUpperCase();
   const ra = SIZE_ORDER.indexOf(la), rb = SIZE_ORDER.indexOf(lb);
   if(ra>=0 && rb>=0) return ra-rb;
@@ -725,7 +741,7 @@ function netPrice(p){ return Number(p.selling_price)>0 ? Number(p.selling_price)
 function marginOf(p){ const n = netPrice(p); return n>0 ? (n-Number(p.standard_cost||0))/n*100 : null; }
 /* A product that has never moved and has no reorder point is not "out of stock": it simply has not arrived yet */
 function neverStocked(p){ return totalQty(p.id)===0 && Number(p.reorder_point||0)===0 && !db.txns.some(t=>t.product_id===p.id); }
-function isLow(p){ const q = totalQty(p.id); return !neverStocked(p) && (q===0 || q<Number(p.reorder_point||0)); }
+function isLow(p){ const q = totalQty(p.id); return !isUndecided(p) && !neverStocked(p) && (q===0 || q<Number(p.reorder_point||0)); }
 
 function statusBadge(p){
   const q = totalQty(p.id);
@@ -883,7 +899,7 @@ function renderDetail(g){
     rows = g.items.map(p=>{
       const th = Number(p.reorder_point||0), locs = locText(p);
       const notes = [locs, th>0?`僅少ライン ${fmtNum(th)}${p.unit||'個'}`:''].filter(Boolean).join(' / ');
-      return `<div class="v-row"><div class="v-main"><div class="v-name">${esc(variantLabel(p)||p.product_code)} ${statusBadge(p)}</div>${notes?`<div class="sub">${esc(notes)}</div>`:''}</div><div class="qty">${fmtNum(totalQty(p.id))}<small>${esc(p.unit||'個')}</small></div></div>`;
+      return `<div class="v-row"><div class="v-main"><div class="v-name">${esc(variantLabel(p)||p.product_code)} ${isUndecided(p)?'':statusBadge(p)}${canWrite()&&!isUndecided(p)?`<button type="button" class="btn btn-link v-edit" data-act="editVariant" data-id="${p.id}" aria-label="${esc(variantLabel(p))}を編集">編集</button>`:''}</div>${notes?`<div class="sub">${esc(notes)}</div>`:''}</div><div class="qty">${fmtNum(totalQty(p.id))}<small>${esc(p.unit||'個')}</small></div></div>`;
     }).join('');
   }
   const ops = canWrite() ? `<div class="op-row">
@@ -891,6 +907,7 @@ function renderDetail(g){
       <button type="button" class="btn btn-sm" data-act="op" data-op="outbound" data-id="${g.key}">${icon('out')}出庫</button>
       <button type="button" class="btn btn-sm" data-act="op" data-op="transfer" data-id="${g.key}">${icon('swap')}移管</button>
       <button type="button" class="btn btn-sm" data-act="op" data-op="adjust" data-id="${g.key}">${icon('sliders')}棚卸・調整</button>
+      <button type="button" class="btn btn-sm" data-act="setVariants" data-id="${g.key}">${icon('plus')}${variantActionLabel(g)}</button>
     </div>` : '';
   const ids = g.items.map(p=>p.id);
   const recent = db.txns.filter(t=>ids.includes(t.product_id)).sort((a,b)=>byText(b.transaction_date,a.transaction_date)||b.id-a.id).slice(0,5);
@@ -1010,7 +1027,7 @@ function renderProducts(){
       const profit = m!=null ? netPrice(p)-Number(p.standard_cost||0) : null;
       const th = Number(p.reorder_point||0);
       return `<tr>
-        <td><div class="name">${esc(fullName(p))}</div><div class="sub">${esc(p.product_code)}${p.description?' / '+esc(p.description):''}</div></td>
+        <td><div class="name">${esc(fullName(p))}</div><div class="sub">${esc(p.product_code)}${p.description?' / '+esc(p.description):''}</div>${canWrite()?(p.model_id==null?`<button type="button" class="btn btn-link v-link" data-act="setVariants" data-id="p${p.id}">サイズ・容量を設定</button>`:(isUndecided(p)?`<button type="button" class="btn btn-link v-link" data-act="setVariants" data-id="m${p.model_id}">サイズ・容量に振り分け</button>`:`<button type="button" class="btn btn-link v-link" data-act="editVariant" data-id="${p.id}">編集</button>`)):''}</td>
         <td class="dim" data-label="サービス"><span>${esc(bizName(p.business_code))}</span></td>
         <td data-label="仕入れ先"><span>${sup?esc(sup.supplier_name):'<span class="badge">未設定</span>'}</span></td>
         <td class="r num" data-label="原価"><span>${fmtYen(p.standard_cost)}</span></td>
@@ -1136,7 +1153,7 @@ function openOp(kind, key, pickable){
       + dateF;
   }
   body += noteF + formErrorSlot;
-  drawerOp = { kind, pickable:canPick };
+  drawerOp = { kind, pickable:canPick }; variantForm = null;
   openDrawer(titles[kind], body, vals=>submitOp(kind, vals), '登録');
   updateAdjustHint();
 }
@@ -1216,6 +1233,139 @@ function openThreshold(p){
       closeDrawer(); await refresh(); showToast('僅少ラインを保存しました');
     });
 }
+/* ---------- sizes and capacities: one form to split a product, add to it, and hand out the current stock ---------- */
+const VARIANT_KEYS = ['サイズ','容量','カラー','その他'];
+const SIZE_PRESETS = ['XS','S','M','L','XL','2XL','3XL','FREE'];
+let variantForm = null;
+function variantActionLabel(g){
+  if(!g.model) return 'サイズ・容量を設定';
+  return g.items.some(p=>isUndecided(p)&&totalQty(p.id)>0) ? 'サイズ・容量に振り分け' : 'サイズ・容量を追加';
+}
+function openVariantForm(key){
+  const g = groupByKey(key); if(!g) return;
+  const base = g.items[0];
+  const source = !g.model ? base : g.items.find(isUndecided)||null;
+  const stock = source ? stockMap(source.id) : {};
+  const locs = Object.keys(stock).map(Number).filter(id=>stock[id]>0);
+  const existing = g.model ? g.items.filter(p=>!isUndecided(p)) : [];
+  const variantKey = g.model ? (g.model.variant_keys||[])[0]||'サイズ' : 'サイズ';
+  variantForm = { g, base, source, stock, locs, existing, seq:0 };
+  const total = locs.reduce((n,id)=>n+stock[id],0), u = g.unit||'個';
+  const stockNote = total>0
+    ? `<p class="hint">今の在庫 ${fmtNum(total)}${esc(u)}を、分かる分だけ振り分けてください。残りは「${UNDECIDED}」として残り、あとから振り分けられます。</p>` : '';
+  const body = `<div class="field full"><span class="label">商品</span><div class="plain-value">${esc(g.name)}</div></div>`
+    + (g.model
+      ? `<div class="field full"><span class="label">種類</span><div class="plain-value">${esc(variantKey)}</div><input type="hidden" name="vkey" value="${esc(variantKey)}"></div>`
+      : field({name:'vkey',label:'種類',half:true,value:variantKey,options:VARIANT_KEYS.map(k=>({value:k,label:k}))}))
+    + `<div class="field full" id="vfPresetBox"><span class="label">よく使うサイズ</span><div class="vf-presets" id="vfPresets"></div></div>
+       <div class="field full"><span class="label">サイズ・容量の一覧</span>${stockNote}
+         <div class="vf-head"><span>名前</span><span>原価(円)</span><span>税込価格(円)</span><span></span></div>
+         <div id="vfRows"></div>
+         <button type="button" class="btn btn-sm vf-add" data-act="vAddRow">${icon('plus')}行を追加</button>
+         <p class="hint vf-remain" id="vfRemain"></p>
+       </div>
+       <div class="field full"><p class="hint">登録したら、商品マスタにも同じ行を追加してください。</p></div>`
+    + formErrorSlot;
+  drawerOp = null;
+  openDrawer(variantActionLabel(g), body, v=>submitVariants(v), '登録');
+  if(locs.length) existing.forEach(p=>addVariantRow({product:p}));
+  if(!existing.length || !locs.length) addVariantRow({});
+  syncVariantForm();
+}
+function addVariantRow(o){
+  const f = variantForm, i = ++f.seq, box = el('vfRows');
+  const label = o.product ? variantLabel(o.product) : (o.label||'');
+  const exists = o.product || (f.existing.some(p=>variantLabel(p).toLowerCase()===label.toLowerCase()) && label);
+  if(label && !o.product && [...box.querySelectorAll('[data-vlabel]')].some(n=>n.value.trim().toLowerCase()===label.toLowerCase())) return null;
+  /* an empty row is reused by the size shortcuts so tapping S M L does not leave a blank line at the top */
+  if(label && !o.product){
+    const blank = [...box.querySelectorAll('input[data-vlabel]:not([type=hidden])')].find(n=>!n.value.trim());
+    if(blank && !exists){ blank.value = label; return blank.closest('.vf-row'); }
+  }
+  const cost = Number(f.base.standard_cost)||0, price = Number(f.base.selling_price)||0;
+  const nameCell = o.product
+    ? `<div class="vf-fixed">${esc(label)}<input type="hidden" name="vl_${i}" data-vlabel value="${esc(label)}"></div>`
+    : `<input class="input" name="vl_${i}" data-vlabel aria-label="名前" value="${esc(label)}" placeholder="例: M、1000g">`;
+  const moneyCells = o.product
+    ? `<div class="vf-fixed vf-money num">${fmtYen(o.product.standard_cost)}</div><div class="vf-fixed vf-money num">${fmtYen(o.product.selling_price)}</div>`
+    : `<input class="input" name="vc_${i}" aria-label="原価" type="number" min="0" inputmode="numeric" value="${cost}"><input class="input" name="vp_${i}" aria-label="税込価格" type="number" min="0" inputmode="numeric" value="${price}">`;
+  const remove = o.product ? '<span></span>' : `<button type="button" class="icon-btn" data-act="vRemoveRow" aria-label="この行を削除">${icon('x')}</button>`;
+  const alloc = f.locs.map(id=>`<label class="vf-alloc"><span>${esc(whName(id))}から</span><input class="input" name="va_${i}_${id}" data-wh="${id}" type="number" min="0" inputmode="numeric" placeholder="0"></label><div class="field-err" data-err="va_${i}_${id}"></div>`).join('');
+  box.insertAdjacentHTML('beforeend', `<div class="vf-row" data-i="${i}"><div class="vf-line">${nameCell}${moneyCells}${remove}</div><div class="field-err" data-err="vl_${i}"></div>${alloc}</div>`);
+  return box.lastElementChild;
+}
+function syncVariantForm(){
+  const f = variantForm; if(!f || !el('vfRows')) return;
+  const key = (el('drawerBody').querySelector('[name="vkey"]')||{}).value;
+  const labels = [...el('vfRows').querySelectorAll('[data-vlabel]')].map(n=>n.value.trim().toLowerCase());
+  const taken = f.existing.map(p=>variantLabel(p).toLowerCase());
+  const box = el('vfPresetBox');
+  box.hidden = key!=='サイズ';
+  el('vfPresets').innerHTML = SIZE_PRESETS.map(s=>{
+    const used = labels.includes(s.toLowerCase()) || taken.includes(s.toLowerCase());
+    return `<button type="button" class="btn btn-sm" data-act="vPreset" data-label="${s}"${used?' disabled':''}>${s}</button>`;
+  }).join('');
+  const rem = el('vfRemain');
+  if(!f.locs.length){ rem.textContent = ''; return; }
+  rem.textContent = '振り分け後の未確定: ' + f.locs.map(id=>{
+    const used = [...el('vfRows').querySelectorAll(`[data-wh="${id}"]`)].reduce((n,x)=>n+(Number(x.value)||0),0);
+    return `${whName(id)} ${fmtNum(f.stock[id]-used)}`;
+  }).join('、');
+}
+async function submitVariants(v){
+  clearFieldErrors();
+  const f = variantForm, rows = [], seen = new Set(), used = {};
+  const taken = f.existing.map(p=>variantLabel(p).toLowerCase());
+  for(const row of el('vfRows').querySelectorAll('.vf-row')){
+    const i = row.dataset.i, label = (v['vl_'+i]||'').trim();
+    const isExisting = !!row.querySelector('input[type=hidden][data-vlabel]');
+    const alloc = {};
+    for(const id of f.locs){
+      const raw = v[`va_${i}_${id}`]||''; if(raw==='') continue;
+      const n = nonNegInt(raw);
+      if(n===null){ setFieldError(`va_${i}_${id}`,'0以上の整数で入力してください。'); return; }
+      if(n>0){ alloc[id]=n; used[id]=(used[id]||0)+n; }
+    }
+    if(isExisting){ if(Object.keys(alloc).length) rows.push({label,alloc}); seen.add(label.toLowerCase()); continue; }
+    if(!label){ if(Object.keys(alloc).length){ setFieldError('vl_'+i,'名前を入力してください。'); return; } continue; }
+    if(label===UNDECIDED){ setFieldError('vl_'+i,`「${UNDECIDED}」は名前に使えません。`); return; }
+    if(seen.has(label.toLowerCase())){ setFieldError('vl_'+i,'同じ名前があります。'); return; }
+    if(taken.includes(label.toLowerCase())){ setFieldError('vl_'+i,'すでに登録されています。'); return; }
+    seen.add(label.toLowerCase());
+    const cost = v['vc_'+i], price = v['vp_'+i];
+    if(!(cost!=='' && Number(cost)>=0)){ setFieldError('vc_'+i,''); setFieldError('vl_'+i,'原価は0以上で入力してください。'); return; }
+    if(!(price!=='' && Number(price)>=0)){ setFieldError('vp_'+i,''); setFieldError('vl_'+i,'税込価格は0以上で入力してください。'); return; }
+    rows.push({label,cost:Number(cost),price:Number(price),alloc});
+  }
+  if(!rows.length){ setFormError(f.locs.length?'名前か振り分ける数を入力してください。':'名前を入力してください。'); return; }
+  for(const id of f.locs){ if((used[id]||0)>f.stock[id]){ setFormError(`${whName(id)}の振り分け合計が在庫(${fmtNum(f.stock[id])})を超えています。`); return; } }
+  const { data, error } = await sb.rpc('fn_web_set_variants',{ p_product_id:f.base.id, p_variant_key:v.vkey, p_rows:rows, p_date:today() });
+  if(error){ setFormError(errText(error)); return; }
+  expandedIds.add('m'+data);
+  closeDrawer(); await refresh();
+  showToast('登録しました。商品マスタにも追加してください');
+}
+function openVariantEdit(p){
+  const stocked = totalQty(p.id)>0;
+  const body = `<div class="field full"><span class="label">商品</span><div class="plain-value">${esc(p.product_name)}</div></div>`
+    + field({name:'label',label:'サイズ・容量の名前',required:true,value:variantLabel(p)})
+    + field({name:'cost',label:'原価(円)',type:'number',half:true,value:Number(p.standard_cost)})
+    + field({name:'price',label:'税込価格(円)',type:'number',half:true,value:Number(p.selling_price)})
+    + field({name:'state',label:'状態',half:true,value:'on',options:stocked?[{value:'on',label:'使用中'}]:[{value:'on',label:'使用中'},{value:'off',label:'停止する'}],
+        after:`<p class="hint">${stocked?'在庫が0になると停止できます。':'停止すると一覧から消えます。同じ名前で登録し直すと戻せます。'}</p>`})
+    + `<div class="field full"><p class="hint">商品コード ${esc(p.product_code)} は変わりません。商品マスタも同じ内容に直してください。</p></div>`
+    + formErrorSlot;
+  drawerOp = null;
+  openDrawer('サイズ・容量を編集', body, async v=>{
+    clearFieldErrors();
+    if(!v.label){ setFieldError('label','名前を入力してください。'); return; }
+    if(!(v.cost!=='' && Number(v.cost)>=0)){ setFieldError('cost','0以上で入力してください。'); return; }
+    if(!(v.price!=='' && Number(v.price)>=0)){ setFieldError('price','0以上で入力してください。'); return; }
+    const { error } = await sb.rpc('fn_web_update_variant',{ p_product_id:p.id, p_label:v.label, p_cost:Number(v.cost), p_price:Number(v.price), p_active:v.state!=='off' });
+    if(error){ setFormError(errText(error)); return; }
+    closeDrawer(); await refresh(); showToast('保存しました');
+  }, '保存');
+}
 function nextCode(list, column, prefix, width){
   const nums = list.map(r=>String(r[column]||'')).filter(c=>c.startsWith(prefix)).map(c=>parseInt(c.slice(prefix.length),10)).filter(n=>!isNaN(n));
   return prefix + String((nums.length?Math.max(...nums):0)+1).padStart(width,'0');
@@ -1275,6 +1425,11 @@ const actions = {
   async signOut(){ await sb.auth.signOut(); me=null; showLogin(); },
   opNew(){ openOpChooser(); },
   op(t){ openOp(t.dataset.op, t.dataset.id); },
+  setVariants(t){ openVariantForm(t.dataset.id); },
+  editVariant(t){ const p = db.products.find(x=>x.id===num(t)); if(p) openVariantEdit(p); },
+  vPreset(t){ addVariantRow({label:t.dataset.label}); syncVariantForm(); },
+  vAddRow(){ const r = addVariantRow({}); syncVariantForm(); if(r) r.querySelector('input').focus(); },
+  vRemoveRow(t){ t.closest('.vf-row').remove(); syncVariantForm(); },
   addSupplier(){ openSupplierForm(null); },
   addPartner(){ openPartnerForm(null); },
   editSupplier(t){ const s = db.suppliers.find(x=>x.id===num(t)); if(s) openSupplierForm(s); },
@@ -1344,6 +1499,7 @@ document.addEventListener('click', e=>{
   if(row) actions[row.dataset.rowAct](row,e);
 });
 document.addEventListener('input', e=>{
+  if(e.target.closest && e.target.closest('.vf-row')) syncVariantForm();
   if(e.target.getAttribute && e.target.getAttribute('aria-invalid')){
     e.target.removeAttribute('aria-invalid');
     const err = el('drawerBody').querySelector(`[data-err="${e.target.name}"]`);
@@ -1352,6 +1508,7 @@ document.addEventListener('input', e=>{
 });
 document.addEventListener('change', e=>{
   if(e.target.name==='product' && drawerOp && drawerOp.pickable && e.target.value){ openOp(drawerOp.kind, e.target.value, true); return; }
+  if(e.target.name==='vkey') syncVariantForm();
   if(e.target.name==='wh'||e.target.name==='product') updateAdjustHint();
 });
 el('drawerForm').addEventListener('submit', e=>e.preventDefault());
