@@ -357,6 +357,23 @@ dialog::backdrop{background:rgba(23,23,23,.32);}
 a.btn{color:inherit;text-decoration:none;}
 .drawer-body .plain-value{min-height:0;}
 .chart-note{overflow-wrap:anywhere;}
+@media (max-width:720px){.tbl tr.row-click:hover>td{background:none;}.tbl tr.row-click:hover{background:var(--hover);}}
+.v-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.v-chip{display:inline-flex;align-items:baseline;gap:4px;padding:0 8px;min-height:24px;line-height:24px;font-size:12px;color:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);}
+.v-chip b{font-weight:600;color:var(--ink);}
+.v-chip.is-none{color:var(--ink-3);}
+.v-chip.is-none b{font-weight:400;color:var(--ink-3);}
+.v-chip.is-low{border-color:var(--accent);}
+.v-chip.is-low b{color:var(--accent-text);}
+.v-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:48px;padding:8px 0;border-bottom:1px solid var(--line);}
+.v-main{min-width:0;}
+.v-name{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-weight:500;overflow-wrap:anywhere;}
+.v-inputs{display:grid;gap:8px;}
+.v-input{display:grid;grid-template-columns:minmax(0,1fr) auto 96px;align-items:center;gap:8px;}
+.v-input label{margin:0 !important;font-weight:500;overflow-wrap:anywhere;}
+.v-input .hint{margin:0;white-space:nowrap;}
+.v-input .field-err{grid-column:1/-1;}
+.v-input .field-err:empty{display:none;}
 </style>
 </head>
 <body>
@@ -585,7 +602,7 @@ function confirmDialog(title, text, yesLabel){
     el('confirmNo').focus();
   });
 }
-let drawerSubmit = null, drawerBusy = false;
+let drawerSubmit = null, drawerBusy = false, drawerOp = null;
 function openDrawer(title, body, onSubmit, submitLabel){
   el('drawerTitle').textContent = title;
   el('drawerBody').innerHTML = body;
@@ -644,12 +661,12 @@ async function fetchAll(table, order){
   }
 }
 async function loadAll(){
-  const [products,inventories,warehouses,suppliers,productSuppliers,businesses,customers,txns] = await Promise.all([
+  const [products,inventories,warehouses,suppliers,productSuppliers,businesses,customers,txns,models] = await Promise.all([
     fetchAll('products','product_code'), fetchAll('inventories'), fetchAll('warehouses','warehouse_code'),
     fetchAll('suppliers','supplier_code'), fetchAll('product_suppliers'), fetchAll('businesses','sort'),
-    fetchAll('customers'), fetchAll('inventory_transactions')
+    fetchAll('customers'), fetchAll('inventory_transactions'), fetchAll('product_models','model_code')
   ]);
-  Object.assign(db,{products,inventories,warehouses,suppliers,productSuppliers,businesses,customers,txns});
+  Object.assign(db,{products,inventories,warehouses,suppliers,productSuppliers,businesses,customers,txns,models});
 }
 async function refresh(){ await loadAll(); renderAll(); }
 
@@ -663,7 +680,39 @@ function primarySupplier(pid){
 }
 function bizName(code){ const b = db.businesses.find(x=>x.code===code); return b?b.name:'未分類'; }
 function whName(id){ const w = db.warehouses.find(x=>x.id===id); return w?w.warehouse_name:'(不明な保管場所)'; }
-function productName(id){ const p = db.products.find(x=>x.id===id); return p?p.product_name:'(不明な商品)'; }
+function productName(id){ const p = db.products.find(x=>x.id===id); return p?fullName(p):'(不明な商品)'; }
+/* A size or capacity is one row in products (its own stock and history), tied together by product_models */
+function variantLabel(p){ return Object.values(p.variant_attrs||{}).filter(x=>x!==null&&x!=='').join(' / '); }
+function fullName(p){ const v = variantLabel(p); return v?`${p.product_name} / ${v}`:p.product_name; }
+const SIZE_ORDER = ['XXS','XS','S','M','L','XL','XXL','2XL','3XL','4XL','5XL','FREE','F'];
+function byVariant(a,b){
+  const la = variantLabel(a).toUpperCase(), lb = variantLabel(b).toUpperCase();
+  const ra = SIZE_ORDER.indexOf(la), rb = SIZE_ORDER.indexOf(lb);
+  if(ra>=0 && rb>=0) return ra-rb;
+  const na = parseFloat(la), nb = parseFloat(lb);
+  if(!isNaN(na) && !isNaN(nb) && na!==nb) return na-nb;
+  return byText(a.product_code,b.product_code);
+}
+function productGroups(){
+  const byModel = new Map(), out = [];
+  activeProducts().forEach(p=>{
+    const m = p.model_id!=null ? db.models.find(x=>x.id===p.model_id) : null;
+    if(m){
+      let g = byModel.get(m.id);
+      if(!g){ g = { key:'m'+m.id, model:m, name:m.model_name, code:m.model_code, business_code:m.business_code, unit:p.unit, items:[] }; byModel.set(m.id,g); out.push(g); }
+      g.items.push(p);
+    } else out.push({ key:'p'+p.id, model:null, name:p.product_name, code:p.product_code, business_code:p.business_code, unit:p.unit, items:[p] });
+  });
+  out.forEach(g=>g.items.sort(byVariant));
+  return out.sort((a,b)=>byText(a.code,b.code));
+}
+function groupByKey(key){ return productGroups().find(g=>g.key===key)||null; }
+function groupQty(g){ return g.items.reduce((s,p)=>s+totalQty(p.id),0); }
+function groupShown(g){ return g.items.reduce((s,p)=>s+shownQty(p),0); }
+function groupValue(g){ return g.items.reduce((s,p)=>s+shownQty(p)*stockUnitCost(p),0); }
+function groupLow(g){ return g.items.some(isLow); }
+function groupNever(g){ return g.items.every(neverStocked); }
+function groupSupplier(g){ for(const p of g.items){ const s = primarySupplier(p.id); if(s) return s; } return null; }
 function activeWarehouses(){ return db.warehouses.filter(w=>w.active); }
 /* Stock is valued at the weighted average of recorded inbound costs; the master cost (next purchase) is the fallback */
 function stockUnitCost(p){
@@ -685,11 +734,16 @@ function statusBadge(p){
   if(q<Number(p.reorder_point||0)) return `<span class="badge">${icon('alert')}僅少</span>`;
   return '';
 }
+function groupBadge(g){
+  if(!g.model) return statusBadge(g.items[0]);
+  if(groupNever(g)) return '<span class="badge badge-quiet">未入荷</span>';
+  if(groupQty(g)===0) return '<span class="badge badge-solid">在庫切れ</span>';
+  return groupLow(g) ? `<span class="badge">${icon('alert')}一部不足</span>` : '';
+}
 function emptyHtml(title, text, action){
   return `<div class="empty"><div class="empty-title">${esc(title)}</div>${text?`<p class="empty-text">${esc(text)}</p>`:''}${action||''}</div>`;
 }
-function bizOptions(selectEl, current){
-  const list = activeProducts();
+function bizOptions(selectEl, current, list){
   const codes = db.businesses.filter(b=>list.some(p=>p.business_code===b.code));
   const hasNone = list.some(p=>!p.business_code);
   selectEl.innerHTML = [`<option value="全て">サービス: すべて (${list.length})</option>`]
@@ -714,12 +768,13 @@ function setSection(name){
 /* ---------- inventory ---------- */
 function renderKpis(){
   const list = activeProducts();
+  const groups = productGroups();
   const units = list.reduce((s,p)=>s+totalQty(p.id),0);
-  const lowCount = list.filter(isLow).length;
+  const lowCount = groups.filter(groupLow).length;
   const value = list.reduce((s,p)=>s+stockUnitCost(p)*totalQty(p.id),0);
   const retail = list.reduce((s,p)=>s+netPrice(p)*totalQty(p.id),0);
   el('kpis').innerHTML = `
-    <div class="kpi"><span class="kpi-label">商品数</span><span class="kpi-value">${list.length}</span></div>
+    <div class="kpi"><span class="kpi-label">商品数</span><span class="kpi-value">${groups.length}</span></div>
     <div class="kpi"><span class="kpi-label">総在庫数</span><span class="kpi-value">${fmtNum(units)}</span></div>
     <button type="button" class="kpi${lowCount>0?' is-alert':''}" data-act="toggleLow" aria-pressed="${invState.low}" title="在庫切れ・僅少の商品だけを表示">
       <span class="kpi-label">${lowCount>0?icon('alert'):''}在庫切れ・僅少</span><span class="kpi-value">${lowCount}</span>
@@ -738,7 +793,7 @@ function barRowHtml(r, max){
 }
 function renderCharts(){
   const list = activeProducts();
-  const productRows = list.map(p=>({ id:p.id, label:p.product_name, value:stockUnitCost(p)*totalQty(p.id), act:'chartItem' }))
+  const productRows = productGroups().map(g=>({ id:g.key, label:g.name, value:g.items.reduce((s,p)=>s+stockUnitCost(p)*totalQty(p.id),0), act:'chartItem' }))
     .filter(r=>r.value>0).sort((a,b)=>b.value-a.value);
   const locVal = {};
   list.forEach(p=>{ const c = stockUnitCost(p); db.inventories.filter(i=>i.product_id===p.id).forEach(i=>{ locVal[i.warehouse_id]=(locVal[i.warehouse_id]||0)+c*i.quantity; }); });
@@ -777,23 +832,24 @@ function renderLocTabs(){
 }
 function shownQty(p){ return qtyAt(p.id, invState.loc); }
 function filteredItems(){
-  const list = activeProducts().filter(p=>{
-    const sup = primarySupplier(p.id);
-    return matchBiz(p, invState.cat)
-      && (includes(p.product_name,invState.search) || includes(p.product_code,invState.search) || includes(sup&&sup.supplier_name,invState.search))
-      && (!invState.low || isLow(p))
-      && (invState.loc==='all' || shownQty(p)>0);
+  const list = productGroups().filter(g=>{
+    const sup = groupSupplier(g), q = invState.search;
+    return matchBiz(g, invState.cat)
+      && (includes(g.name,q) || includes(g.code,q) || includes(sup&&sup.supplier_name,q)
+          || g.items.some(p=>includes(p.product_code,q) || includes(fullName(p),q)))
+      && (!invState.low || groupLow(g))
+      && (invState.loc==='all' || groupShown(g)>0);
   });
-  const val = p => shownQty(p)*stockUnitCost(p), d = invState.dir;
+  const d = invState.dir;
   return list.sort((a,b)=>{
-    if(invState.sort==='name') return d*byText(a.product_name,b.product_name);
-    if(invState.sort==='qty') return d*(shownQty(a)-shownQty(b));
-    if(invState.sort==='value') return d*(val(a)-val(b));
-    const la=isLow(a), lb=isLow(b);
+    if(invState.sort==='name') return d*byText(a.name,b.name);
+    if(invState.sort==='qty') return d*(groupShown(a)-groupShown(b));
+    if(invState.sort==='value') return d*(groupValue(a)-groupValue(b));
+    const la=groupLow(a), lb=groupLow(b);
     if(la!==lb) return la?-1:1;
-    const na=neverStocked(a), nb=neverStocked(b);
+    const na=groupNever(a), nb=groupNever(b);
     if(na!==nb) return na?1:-1;
-    return byText(a.product_code,b.product_code);
+    return byText(a.code,b.code);
   });
 }
 function sortHead(key,label,right){
@@ -810,37 +866,59 @@ function stockMeter(p){
 }
 function txnsOf(pid){ return db.txns.filter(t=>t.product_id===pid).sort((a,b)=>byText(b.transaction_date,a.transaction_date)||b.id-a.id); }
 function signed(n){ return (n>0?'+':'') + fmtNum(n); }
-function renderDetail(p){
+function locText(p){
   const stock = stockMap(p.id);
-  const whIds = Object.keys(stock).map(Number).filter(id=>stock[id]>0);
-  const u = p.unit||'個';
-  const rows = whIds.length
-    ? whIds.map(id=>`<div class="loc-row"><div class="loc-name">${esc(whName(id))}</div><div class="qty">${fmtNum(stock[id])}<small>${esc(u)}</small></div></div>`).join('')
-    : '<p class="hint">在庫はありません。</p>';
+  return Object.keys(stock).map(Number).filter(id=>stock[id]>0).map(id=>`${whName(id)} ${fmtNum(stock[id])}`).join('、');
+}
+function renderDetail(g){
+  const single = !g.model, p0 = g.items[0], u = g.unit||'個';
+  let rows;
+  if(single){
+    const stock = stockMap(p0.id);
+    const whIds = Object.keys(stock).map(Number).filter(id=>stock[id]>0);
+    rows = whIds.length
+      ? whIds.map(id=>`<div class="loc-row"><div class="loc-name">${esc(whName(id))}</div><div class="qty">${fmtNum(stock[id])}<small>${esc(u)}</small></div></div>`).join('')
+      : '<p class="hint">在庫はありません。</p>';
+  } else {
+    rows = g.items.map(p=>{
+      const th = Number(p.reorder_point||0), locs = locText(p);
+      const notes = [locs, th>0?`僅少ライン ${fmtNum(th)}${p.unit||'個'}`:''].filter(Boolean).join(' / ');
+      return `<div class="v-row"><div class="v-main"><div class="v-name">${esc(variantLabel(p)||p.product_code)} ${statusBadge(p)}</div>${notes?`<div class="sub">${esc(notes)}</div>`:''}</div><div class="qty">${fmtNum(totalQty(p.id))}<small>${esc(p.unit||'個')}</small></div></div>`;
+    }).join('');
+  }
   const ops = canWrite() ? `<div class="op-row">
-      <button type="button" class="btn btn-sm" data-act="op" data-op="inbound" data-id="${p.id}">${icon('in')}入庫</button>
-      <button type="button" class="btn btn-sm" data-act="op" data-op="outbound" data-id="${p.id}">${icon('out')}出庫</button>
-      <button type="button" class="btn btn-sm" data-act="op" data-op="transfer" data-id="${p.id}">${icon('swap')}移管</button>
-      <button type="button" class="btn btn-sm" data-act="op" data-op="adjust" data-id="${p.id}">${icon('sliders')}棚卸・調整</button>
+      <button type="button" class="btn btn-sm" data-act="op" data-op="inbound" data-id="${g.key}">${icon('in')}入庫</button>
+      <button type="button" class="btn btn-sm" data-act="op" data-op="outbound" data-id="${g.key}">${icon('out')}出庫</button>
+      <button type="button" class="btn btn-sm" data-act="op" data-op="transfer" data-id="${g.key}">${icon('swap')}移管</button>
+      <button type="button" class="btn btn-sm" data-act="op" data-op="adjust" data-id="${g.key}">${icon('sliders')}棚卸・調整</button>
     </div>` : '';
-  const recent = txnsOf(p.id).slice(0,5);
-  const sup = primarySupplier(p.id);
+  const ids = g.items.map(p=>p.id);
+  const recent = db.txns.filter(t=>ids.includes(t.product_id)).sort((a,b)=>byText(b.transaction_date,a.transaction_date)||b.id-a.id).slice(0,5);
+  const sup = groupSupplier(g);
+  const label = t=>{ const p = g.items.find(x=>x.id===t.product_id); return !single&&p ? ` ${variantLabel(p)}` : ''; };
   return `<div class="detail-inner">
     <div>
-      <div class="detail-title">保管場所別の数量</div>${rows}${ops}
+      <div class="detail-title">${single?'保管場所別の数量':'サイズ・容量別の数量'}</div>${rows}${ops}
       <div class="detail-title detail-gap">最近の入出庫</div>
-      ${recent.length?recent.map(t=>`<div class="meta-row"><span>${esc(t.transaction_date)} ${esc(TYPE_LABEL[t.transaction_type]||t.transaction_type)}<span class="sub-inline">${esc(whName(t.warehouse_id))}</span></span><span class="num">${signed(t.quantity)}${esc(u)}</span></div>`).join(''):'<p class="hint">まだありません。</p>'}
+      ${recent.length?recent.map(t=>`<div class="meta-row"><span>${esc(t.transaction_date)} ${esc(TYPE_LABEL[t.transaction_type]||t.transaction_type)}${esc(label(t))}<span class="sub-inline">${esc(whName(t.warehouse_id))}</span></span><span class="num">${signed(t.quantity)}${esc(u)}</span></div>`).join(''):'<p class="hint">まだありません。</p>'}
     </div>
     <div>
       <div class="detail-title">情報</div>
-      <div class="meta-row"><span>商品コード</span><span>${esc(p.product_code)}</span></div>
-      <div class="meta-row only-mf"><span>サービス</span><span>${esc(bizName(p.business_code))}</span></div>
-      <div class="meta-row only-mf"><span>在庫金額</span><span class="num">${fmtYen(totalQty(p.id)*stockUnitCost(p))}</span></div>
-      <div class="meta-row"><span>在庫の単価</span><span class="num">${fmtYen(stockUnitCost(p))}</span></div>
-      <div class="meta-row"><span>僅少ライン</span><span class="num">${Number(p.reorder_point||0)>0?fmtNum(p.reorder_point)+esc(u):'未設定'}</span></div>
+      <div class="meta-row"><span>商品コード</span><span>${esc(g.code)}</span></div>
+      <div class="meta-row only-mf"><span>サービス</span><span>${esc(bizName(g.business_code))}</span></div>
+      <div class="meta-row only-mf"><span>在庫金額</span><span class="num">${fmtYen(g.items.reduce((s,p)=>s+totalQty(p.id)*stockUnitCost(p),0))}</span></div>
+      ${single?`<div class="meta-row"><span>在庫の単価</span><span class="num">${fmtYen(stockUnitCost(p0))}</span></div>
+      <div class="meta-row"><span>僅少ライン</span><span class="num">${Number(p0.reorder_point||0)>0?fmtNum(p0.reorder_point)+esc(u):'未設定'}</span></div>`:''}
       <div class="meta-row"><span>仕入れ先</span><span>${sup?esc(sup.supplier_name):'未設定'}</span></div>
     </div>
   </div>`;
+}
+function variantChips(g){
+  if(!g.model) return '';
+  return `<div class="v-chips">${g.items.map(p=>{
+    const q = shownQty(p), cls = neverStocked(p)?' is-none':(isLow(p)?' is-low':'');
+    return `<span class="v-chip${cls}">${esc(variantLabel(p)||p.product_code)}<b class="num">${fmtNum(q)}</b></span>`;
+  }).join('')}</div>`;
 }
 function renderList(){
   const list = filteredItems();
@@ -848,29 +926,30 @@ function renderList(){
   if(activeProducts().length===0){ el('listSlot').innerHTML = emptyHtml('商品はまだありません','商品マスタの内容を登録すると、ここに表示されます。'); return; }
   if(list.length===0){ el('listSlot').innerHTML = emptyHtml('該当する在庫はありません','',`<button type="button" class="btn" data-act="clearInv">絞り込みを解除</button>`); return; }
   const qtyLabel = invState.loc==='all' ? '在庫数' : `${whName(Number(invState.loc))}の数量`;
-  const rows = list.map(p=>{
-    const open = expandedIds.has(p.id);
-    const u = p.unit||'個', q = shownQty(p), sup = primarySupplier(p.id);
-    return `<tr class="row-click${open?' is-open':''}" data-row-act="toggle" data-id="${p.id}">
-      <td class="c-toggle"><button type="button" class="icon-btn" data-act="toggle" data-id="${p.id}" data-fk="tg-${p.id}" aria-expanded="${open}" aria-label="詳細を${open?'閉じる':'開く'}"><svg class="icon chev${open?' open':''}" aria-hidden="true"><use href="#i-right"/></svg></button></td>
+  const rows = list.map(g=>{
+    const open = expandedIds.has(g.key);
+    const u = g.unit||'個', q = groupShown(g), sup = groupSupplier(g);
+    return `<tr class="row-click${open?' is-open':''}" data-row-act="toggle" data-id="${g.key}">
+      <td class="c-toggle"><button type="button" class="icon-btn" data-act="toggle" data-id="${g.key}" data-fk="tg-${g.key}" aria-expanded="${open}" aria-label="詳細を${open?'閉じる':'開く'}"><svg class="icon chev${open?' open':''}" aria-hidden="true"><use href="#i-right"/></svg></button></td>
       <td class="c-name">
-        <div class="name">${esc(p.product_name)}</div>
-        <div class="sub">${esc(sup?sup.supplier_name:p.product_code)}</div>
-        <div class="only-m badge-line">${statusBadge(p)}</div>
+        <div class="name">${esc(g.name)}</div>
+        <div class="sub">${esc(sup?sup.supplier_name:g.code)}</div>
+        ${variantChips(g)}
+        <div class="only-m badge-line">${groupBadge(g)}</div>
       </td>
-      <td class="dim only-d">${esc(bizName(p.business_code))}</td>
-      <td class="only-d">${statusBadge(p)}</td>
-      <td class="r c-qty"><span class="qty">${fmtNum(q)}<small>${esc(u)}</small></span>${stockMeter(p)}</td>
-      <td class="r num dim only-d">${fmtYen(q*stockUnitCost(p))}</td>
+      <td class="dim only-d">${esc(bizName(g.business_code))}</td>
+      <td class="only-d">${groupBadge(g)}</td>
+      <td class="r c-qty"><span class="qty">${fmtNum(q)}<small>${esc(u)}</small></span>${g.model?'':stockMeter(g.items[0])}</td>
+      <td class="r num dim only-d">${fmtYen(groupValue(g))}</td>
     </tr>
-    ${open?`<tr class="detail"><td colspan="6">${renderDetail(p)}</td></tr>`:''}`;
+    ${open?`<tr class="detail"><td colspan="6">${renderDetail(g)}</td></tr>`:''}`;
   }).join('');
   el('listSlot').innerHTML = `<div class="tbl-wrap"><table class="tbl tbl-inv">
     <thead><tr><th class="c-toggle" aria-label="開閉"></th>${sortHead('name','商品名')}<th>サービス</th><th>状態</th>${sortHead('qty',qtyLabel,true)}${sortHead('value','在庫金額',true)}</tr></thead>
-    <tbody>${rows}</tbody></table></div>${list.some(p=>stockMeter(p))?'<p class="chart-note">在庫数のバーの縦線は僅少ラインです。バーの右端は僅少ラインの3倍です。</p>':''}`;
+    <tbody>${rows}</tbody></table></div>${list.some(g=>!g.model&&stockMeter(g.items[0]))?'<p class="chart-note">在庫数のバーの縦線は僅少ラインです。バーの右端は僅少ラインの3倍です。</p>':''}`;
 }
 function renderInventory(){
-  bizOptions(el('catSelect'),invState.cat);
+  bizOptions(el('catSelect'),invState.cat,productGroups());
   renderKpis(); renderCharts(); renderLocTabs(); renderList();
 }
 
@@ -909,11 +988,11 @@ function marginMeter(m){
   return `<span class="meter" role="img" aria-label="粗利率 ${Math.round(m)}%"><span class="meter-fill" style="width:${Math.max(0,Math.min(100,m)).toFixed(1)}%"></span></span>`;
 }
 function renderProducts(){
-  bizOptions(el('productCat'),productState.cat);
-  const list = activeProducts().filter(p=>{
+  bizOptions(el('productCat'),productState.cat,activeProducts());
+  const list = productGroups().flatMap(g=>g.items).filter(p=>{
     const sup = primarySupplier(p.id);
-    return matchBiz(p,productState.cat) && (includes(p.product_name,productState.search)||includes(p.product_code,productState.search)||includes(sup&&sup.supplier_name,productState.search));
-  }).sort((a,b)=>byText(a.product_code,b.product_code));
+    return matchBiz(p,productState.cat) && (includes(fullName(p),productState.search)||includes(p.product_code,productState.search)||includes(sup&&sup.supplier_name,productState.search));
+  });
   if(productState.sort==='margin'){
     list.sort((a,b)=>{
       const ma=marginOf(a), mb=marginOf(b);
@@ -931,7 +1010,7 @@ function renderProducts(){
       const profit = m!=null ? netPrice(p)-Number(p.standard_cost||0) : null;
       const th = Number(p.reorder_point||0);
       return `<tr>
-        <td><div class="name">${esc(p.product_name)}</div><div class="sub">${esc(p.product_code)}${p.description?' / '+esc(p.description):''}</div></td>
+        <td><div class="name">${esc(fullName(p))}</div><div class="sub">${esc(p.product_code)}${p.description?' / '+esc(p.description):''}</div></td>
         <td class="dim" data-label="サービス"><span>${esc(bizName(p.business_code))}</span></td>
         <td data-label="仕入れ先"><span>${sup?esc(sup.supplier_name):'<span class="badge">未設定</span>'}</span></td>
         <td class="r num" data-label="原価"><span>${fmtYen(p.standard_cost)}</span></td>
@@ -1002,92 +1081,130 @@ function renderAll(){
 
 /* ---------- stock operations: all go through fn_web_* so the ledger stays consistent ---------- */
 function productOptions(){
-  return [{value:'',label:'選択してください'}].concat(activeProducts().map(p=>({value:p.id,label:`${p.product_name}(${p.product_code})`})));
+  return [{value:'',label:'選択してください'}].concat(productGroups().map(g=>({value:g.key,label:`${g.name}(${g.code})`})));
 }
 function warehouseOptions(list){ return list.map(w=>({value:w.id,label:w.warehouse_name})); }
-function openOp(kind, productId){
+/* One number per size or capacity, so an order of S 5 / M 10 / L 5 is a single form */
+function variantInputs(g, kind){
+  const label = kind==='adjust' ? '実際の数量' : '数量';
+  const hint = kind==='adjust' ? '空欄のものは変更しません。' : '動かすものだけ入力してください。';
+  return `<div class="field full"><span class="label">${label}<span class="req">必須</span></span><div class="v-inputs">${g.items.map(p=>`
+    <div class="v-input">
+      <label for="f_q_${p.id}">${esc(variantLabel(p)||p.product_code)}</label>
+      <span class="hint" data-cur="${p.id}"></span>
+      <input id="f_q_${p.id}" name="q_${p.id}" class="input" type="number" min="0" inputmode="numeric">
+      <div class="field-err" data-err="q_${p.id}"></div>
+    </div>`).join('')}</div><p class="hint">${hint}</p></div>`;
+}
+function openOp(kind, key, pickable){
   const titles = { inbound:'入庫', outbound:'出庫', transfer:'移管', adjust:'棚卸・調整' };
   const whs = activeWarehouses();
-  const productF = productId
-    ? `<div class="field full"><span class="label">商品</span><div class="plain-value">${esc(productName(productId))}</div><input type="hidden" name="product" value="${productId}"></div>`
-    : field({name:'product',label:'商品',required:true,value:'',options:productOptions()});
+  const g = key ? groupByKey(key) : null;
+  const canPick = pickable || !key;
+  const productF = canPick
+    ? field({name:'product',label:'商品',required:true,value:key||'',options:productOptions()})
+    : `<div class="field full"><span class="label">商品</span><div class="plain-value">${esc(g.name)}</div><input type="hidden" name="product" value="${esc(key)}"></div>`;
+  const multi = g && g.model;
   const dateF = field({name:'date',label:kind==='adjust'?'調整日':'日付',type:'date',half:true,value:today(),required:true});
   const noteF = field({name:'remarks',label:'メモ',placeholder:'任意'});
+  const qtyF = multi ? variantInputs(g,kind) : field({name:'qty',label:'数量',type:'number',min:1,half:true,required:true});
   let body = productF;
-  const pid0 = productId || null;
-  const defaultWh = pid0 ? (Object.entries(stockMap(pid0)).find(([,q])=>q>0)||[whs[0]&&whs[0].id])[0] : (whs[0]&&whs[0].id);
+  const stocked = g ? g.items.map(p=>Object.entries(stockMap(p.id)).find(([,q])=>q>0)).find(Boolean) : null;
+  const defaultWh = stocked ? stocked[0] : (whs[0]&&whs[0].id);
   if(kind==='inbound'){
-    const sup = pid0 ? primarySupplier(pid0) : null;
-    const lastCost = pid0 ? db.products.find(p=>p.id===pid0).standard_cost : '';
+    const sup = g ? groupSupplier(g) : null;
+    const costs = g ? [...new Set(g.items.map(p=>Number(p.standard_cost)))] : [];
+    const lastCost = costs.length===1 ? costs[0] : '';
+    const hint = g && costs.length>1 ? '空欄なら、サイズごとの商品マスタの原価で登録します。' : '実際の金額に直すと、在庫金額に反映されます。';
     body += field({name:'wh',label:'入庫先',half:true,value:defaultWh,options:warehouseOptions(whs)})
-      + field({name:'qty',label:'数量',type:'number',min:1,half:true,required:true})
-      + dateF
-      + field({name:'cost',label:'仕入単価(円・税抜)',type:'number',half:true,value:lastCost,after:'<p class="hint">実際の金額に直すと、在庫金額に反映されます。</p>'})
+      + qtyF + dateF
+      + field({name:'cost',label:'仕入単価(円・税抜)',type:'number',half:true,value:lastCost,after:`<p class="hint">${hint}</p>`})
       + field({name:'supplier',label:'仕入れ先',value:sup?sup.id:'',options:[{value:'',label:'未選択'}].concat(db.suppliers.filter(s=>s.active).map(s=>({value:s.id,label:s.supplier_name})))});
   } else if(kind==='outbound'){
     body += field({name:'wh',label:'出庫元',half:true,value:defaultWh,options:warehouseOptions(whs)})
-      + field({name:'qty',label:'数量',type:'number',min:1,half:true,required:true})
-      + dateF
+      + qtyF + dateF
       + field({name:'destination',label:'出庫先',half:true,placeholder:'チーム名、販売先など'});
   } else if(kind==='transfer'){
     const to = whs.find(w=>String(w.id)!==String(defaultWh));
     body += field({name:'wh',label:'移管元',half:true,value:defaultWh,options:warehouseOptions(whs)})
       + field({name:'to',label:'移管先',half:true,value:to?to.id:'',options:warehouseOptions(whs)})
-      + field({name:'qty',label:'数量',type:'number',min:1,half:true,required:true})
-      + dateF;
+      + qtyF + dateF;
   } else {
     body += field({name:'wh',label:'保管場所',half:true,value:defaultWh,options:warehouseOptions(whs)})
-      + field({name:'after',label:'実際の数量',type:'number',half:true,required:true,after:'<p class="hint" id="adjustNow"></p>'})
+      + (multi ? qtyF : field({name:'after',label:'実際の数量',type:'number',half:true,required:true,after:'<p class="hint" id="adjustNow"></p>'}))
       + field({name:'reason',label:'理由',half:true,value:REASONS[0],options:REASONS.map(r=>({value:r,label:r}))})
       + dateF;
   }
   body += noteF + formErrorSlot;
+  drawerOp = { kind, pickable:canPick };
   openDrawer(titles[kind], body, vals=>submitOp(kind, vals), '登録');
   updateAdjustHint();
 }
 function updateAdjustHint(){
-  const out = el('adjustNow'); if(!out) return;
   const v = formValues();
-  out.textContent = v.product && v.wh ? `現在の記録: ${fmtNum(qtyAt(Number(v.product),v.wh))}` : '';
+  el('drawerBody').querySelectorAll('[data-cur]').forEach(n=>{ n.textContent = v.wh ? `現在 ${fmtNum(qtyAt(Number(n.dataset.cur),v.wh))}` : ''; });
+  const out = el('adjustNow'); if(!out) return;
+  const g = v.product ? groupByKey(v.product) : null;
+  out.textContent = g && v.wh ? `現在の記録: ${fmtNum(qtyAt(g.items[0].id,v.wh))}` : '';
 }
+function opCall(kind, v, productId, n, multi, unitCost){
+  const remarks = v.remarks || null, base = { p_product_id:productId };
+  if(kind==='adjust') return ['fn_web_adjustment',{...base,p_warehouse_id:Number(v.wh),p_quantity_after:n,p_reason:v.reason,p_adjusted_at:v.date,p_remarks:remarks}];
+  if(kind==='inbound') return ['fn_web_inbound',{...base,p_warehouse_id:Number(v.wh),p_quantity:n,p_transaction_date:v.date,p_supplier_id:v.supplier?Number(v.supplier):null,p_unit_cost:v.cost===''?(multi?unitCost:null):Number(v.cost),p_remarks:remarks}];
+  if(kind==='outbound') return ['fn_web_outbound',{...base,p_warehouse_id:Number(v.wh),p_quantity:n,p_transaction_date:v.date,p_destination:v.destination||null,p_remarks:remarks}];
+  return ['fn_web_transfer',{...base,p_from_warehouse_id:Number(v.wh),p_to_warehouse_id:Number(v.to),p_quantity:n,p_transfer_date:v.date,p_remarks:remarks}];
+}
+const OP_DONE = { inbound:'入庫を登録しました', outbound:'出庫を登録しました', transfer:'移管を登録しました', adjust:'調整を登録しました' };
 async function submitOp(kind, v){
   clearFieldErrors();
   if(!v.product){ setFieldError('product','商品を選択してください。'); return; }
+  const g = groupByKey(v.product);
+  if(!g){ setFieldError('product','商品を選択してください。'); return; }
   if(!v.date){ setFieldError('date','日付を入力してください。'); return; }
-  const base = { p_product_id:Number(v.product) };
-  const remarks = v.remarks || null;
-  let fn, params, done;
-  if(kind==='adjust'){
-    const after = nonNegInt(v.after);
-    if(after===null){ setFieldError('after','0以上の整数で入力してください。'); return; }
-    fn='fn_web_adjustment'; done='調整を登録しました';
-    params={...base,p_warehouse_id:Number(v.wh),p_quantity_after:after,p_reason:v.reason,p_adjusted_at:v.date,p_remarks:remarks};
-  } else {
-    const qty = posInt(v.qty);
-    if(qty===null){ setFieldError('qty','1以上の整数で入力してください。'); return; }
-    if(kind==='inbound'){
-      if(v.cost!=='' && !(Number(v.cost)>=0)){ setFieldError('cost','0以上で入力してください。'); return; }
-      fn='fn_web_inbound'; done='入庫を登録しました';
-      params={...base,p_warehouse_id:Number(v.wh),p_quantity:qty,p_transaction_date:v.date,p_supplier_id:v.supplier?Number(v.supplier):null,p_unit_cost:v.cost===''?null:Number(v.cost),p_remarks:remarks};
-    } else if(kind==='outbound'){
-      fn='fn_web_outbound'; done='出庫を登録しました';
-      params={...base,p_warehouse_id:Number(v.wh),p_quantity:qty,p_transaction_date:v.date,p_destination:v.destination||null,p_remarks:remarks};
-    } else {
-      if(v.wh===v.to){ setFieldError('to','移管元と違う場所を選んでください。'); return; }
-      fn='fn_web_transfer'; done='移管を登録しました';
-      params={...base,p_from_warehouse_id:Number(v.wh),p_to_warehouse_id:Number(v.to),p_quantity:qty,p_transfer_date:v.date,p_remarks:remarks};
-    }
+  if(kind==='inbound' && v.cost!=='' && !(Number(v.cost)>=0)){ setFieldError('cost','0以上で入力してください。'); return; }
+  if(kind==='transfer' && v.wh===v.to){ setFieldError('to','移管元と違う場所を選んでください。'); return; }
+  if(!g.model){
+    const p = g.items[0];
+    const n = kind==='adjust' ? nonNegInt(v.after) : posInt(v.qty);
+    if(n===null){ if(kind==='adjust') setFieldError('after','0以上の整数で入力してください。'); else setFieldError('qty','1以上の整数で入力してください。'); return; }
+    const [fn,params] = opCall(kind,v,p.id,n,false);
+    const { error } = await sb.rpc(fn, params);
+    if(error){ setFormError(errText(error)); return; }
+    expandedIds.add(g.key); closeDrawer(); await refresh(); showToast(OP_DONE[kind]);
+    return;
   }
-  const { error } = await sb.rpc(fn, params);
-  if(error){ setFormError(errText(error)); return; }
-  expandedIds.add(Number(v.product));
-  closeDrawer();
-  await refresh();
-  showToast(done);
+  /* several sizes: check everything first so a mistake in one size stops the whole form before anything is saved */
+  const lines = [];
+  for(const p of g.items){
+    const raw = v['q_'+p.id]; if(raw===undefined || raw==='') continue;
+    const n = kind==='adjust' ? nonNegInt(raw) : (raw==='0'?0:posInt(raw));
+    const name = variantLabel(p)||p.product_code;
+    if(n===null){ setFieldError('q_'+p.id,kind==='adjust'?'0以上の整数で入力してください。':'1以上の整数で入力してください。'); return; }
+    if(kind==='adjust'){ if(n===qtyAt(p.id,v.wh)) continue; }
+    else if(n===0) continue;
+    if((kind==='outbound'||kind==='transfer') && n>qtyAt(p.id,v.wh)){ setFieldError('q_'+p.id,`${name}の在庫が足りません(現在 ${fmtNum(qtyAt(p.id,v.wh))})。`); return; }
+    lines.push({p,n,name});
+  }
+  if(!lines.length){ setFormError(kind==='adjust'?'変更する数量がありません。':'数量を1つ以上入力してください。'); return; }
+  const done = [];
+  for(const line of lines){
+    const [fn,params] = opCall(kind,v,line.p.id,line.n,true,Number(line.p.standard_cost));
+    const { error } = await sb.rpc(fn, params);
+    if(error){
+      await refresh().catch(()=>{});
+      done.forEach(d=>{ const i = el('f_q_'+d.p.id); if(i) i.value=''; });
+      updateAdjustHint();
+      setFormError(`${done.length?`登録済み: ${done.map(d=>d.name).join('、')}(入力欄を空にしました)。`:''}${line.name}以降は登録できませんでした: ${errText(error)}`);
+      return;
+    }
+    done.push(line);
+  }
+  expandedIds.add(g.key); closeDrawer(); await refresh();
+  showToast(`${OP_DONE[kind]}(${done.map(d=>`${d.name} ${fmtNum(d.n)}`).join('、')})`);
 }
 function openThreshold(p){
   openDrawer('僅少ラインを設定',
-    `<div class="field full"><span class="label">商品</span><div class="plain-value">${esc(p.product_name)}</div></div>`
+    `<div class="field full"><span class="label">商品</span><div class="plain-value">${esc(fullName(p))}</div></div>`
     + field({name:'threshold',label:`僅少ライン(${p.unit||'個'})`,type:'number',half:true,value:p.reorder_point,after:'<p class="hint">0にすると未設定になります。</p>'})
     + formErrorSlot,
     async v=>{
@@ -1157,7 +1274,7 @@ const actions = {
   closeDrawer(){ closeDrawer(); },
   async signOut(){ await sb.auth.signOut(); me=null; showLogin(); },
   opNew(){ openOpChooser(); },
-  op(t){ openOp(t.dataset.op, num(t)); },
+  op(t){ openOp(t.dataset.op, t.dataset.id); },
   addSupplier(){ openSupplierForm(null); },
   addPartner(){ openPartnerForm(null); },
   editSupplier(t){ const s = db.suppliers.find(x=>x.id===num(t)); if(s) openSupplierForm(s); },
@@ -1185,7 +1302,7 @@ const actions = {
   clearInv(){ clearInv(); renderInventory(); },
   chartLoc(t){ invState.loc = String(invState.loc)===t.dataset.id ? 'all' : t.dataset.id; renderAll(); },
   chartItem(t){
-    const id = num(t);
+    const id = t.dataset.id;
     clearInv(); expandedIds.add(id); renderAll();
     const row = document.querySelector(`tr[data-id="${id}"]`);
     if(row){ row.scrollIntoView({block:'center'}); const b=row.querySelector('[data-act="toggle"]'); if(b) b.focus(); }
@@ -1202,7 +1319,7 @@ const actions = {
     else { productState.sort=null; productState.dir=-1; }
     renderProducts();
   },
-  toggle(t){ const id=num(t); if(expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id); renderAll(); },
+  toggle(t){ const id=t.dataset.id; if(expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id); renderAll(); },
   chooseOp(t){ openOp(t.dataset.op, null); }
 };
 function clearInv(){ invState.cat='全て'; invState.low=false; invState.loc='all'; invState.search=''; el('searchBox').value=''; }
@@ -1233,7 +1350,10 @@ document.addEventListener('input', e=>{
     if(err) err.textContent = '';
   }
 });
-document.addEventListener('change', e=>{ if(e.target.name==='wh'||e.target.name==='product') updateAdjustHint(); });
+document.addEventListener('change', e=>{
+  if(e.target.name==='product' && drawerOp && drawerOp.pickable && e.target.value){ openOp(drawerOp.kind, e.target.value, true); return; }
+  if(e.target.name==='wh'||e.target.name==='product') updateAdjustHint();
+});
 el('drawerForm').addEventListener('submit', e=>e.preventDefault());
 el('drawerBody').addEventListener('keydown', e=>{
   if(e.key==='Enter' && !e.isComposing && e.target.tagName==='INPUT'){ e.preventDefault(); runDrawerSubmit(); }
