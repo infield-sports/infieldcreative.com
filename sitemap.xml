@@ -65,4 +65,17 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+  <!-- MAGAZINE:START -->
+  <url>
+    <loc>https://infieldcreative.com/magazine/</loc>
+    <lastmod>2026-11-07</lastmod>
+  </url>
+  <url>
+    <loc>https://infieldcreative.com/magazine/uniform/</loc>
+  </url>
+  <url>
+    <loc>https://infieldcreative.com/magazine/uniform-order-flow/</loc>
+    <lastmod>2026-11-07</lastmod>
+  </url>
+  <!-- MAGAZINE:END -->
 </urlset>

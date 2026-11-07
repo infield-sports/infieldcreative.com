@@ -13,6 +13,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # MAGAZINE の生成ページが記事と食い違っていたら公開を止める
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check MAGAZINE build is up to date
+        run: |
+          npm ci --silent
+          npm run build
+          git diff --exit-code || (echo "::error::npm run build の結果がコミットされていません" && exit 1)
+          rm -rf node_modules
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
